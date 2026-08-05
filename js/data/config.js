@@ -4,10 +4,13 @@
 
 const STEPS = ["Abandonné","Famélique","Suffisant","Généreux","Fastueux"];
 
-/* Échelle resserrée. Tenir les six portefeuilles à « Suffisant » coûte 12,
-   à « Fastueux » 30. Les rentrées vont de 9 en 1479 à 18 pour un règne bien
-   mené : on ne tient jamais les six, même modestement. */
-const STEP_COST = [0,1,2,3,5];
+/* Tenir les six lignes à « Suffisant » coûte 24 quand l'année 1479 rapporte 9
+   et une bonne année de 1487 dix-huit. On n'en tient jamais plus de deux ou
+   trois : la répartition est le vrai arbitrage du jeu, et abandonner une ligne
+   doit être un choix qu'on assume, pas un défaut de calcul.
+   L'entretien des ordres suit ces coûts (voir ENTRETIEN_PAR_MARAVEDI) : une
+   ligne plus chère entretient d'autant plus. */
+const STEP_COST = [0,2,4,6,9];
 const STEP_MOD  = [-14,-7,0,7,13];
 
 /* Trois lignes portent le nom de l'ordre qu'elles entretiennent — c'est la

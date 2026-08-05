@@ -485,6 +485,12 @@ function sChron(){
   <div style="padding-top:40px"></div>
   <div class="eyebrow">Chronique · année ${S.year}</div>
   <h2>Ce que l'on retiendra</h2>
+  ${ruptureGenerale()?`<div class="rupture">
+    <b>${S.sursis?"Dernière année.":"Les trois ordres sont en rupture."}</b>
+    ${S.sursis
+      ? "La noblesse, les villes et l'Église ont rompu deux années de suite. Si l'année qui vient ne les ramène pas, le règne s'arrête là."
+      : "Il ne reste personne pour gouverner avec. Vous avez un an pour en ramener un — la répartition est le seul levier qui agisse assez vite."}
+    </div>`:ordresEnRupture().length===2?`<div class="warn">Deux ordres sur trois sont en rupture : ${ordresEnRupture().map(g=>GAUGES[g].n).join(" et ")}. Si le troisième tombe, le règne est en sursis.</div>`:""}
   <div class="rule"></div>
   <div class="chron">${yr.length?yr.map((c,i)=>
     `<div class="entry"><p${i===0?' class="dropcap"':''}>${c.txt}</p></div>`).join("")
@@ -507,6 +513,13 @@ function sChron(){
   animerChiffres();
   document.getElementById("n").onclick=()=>{
     const d=soldeDette();
+    /* La rupture générale : constatée une fois, elle laisse un an. Si elle
+       tient encore à la fin de l'année suivante, le règne tombe. */
+    if(ruptureGenerale()){
+      if(S.sursis){ S.fin="rupture"; S.phase="end"; sauver(); render(); return; }
+      S.sursis=true;
+      S.chronicle.push({y:S.year,txt:"Les grands, les villes et l'Église rompirent la même année. On dit à la cour que si cela durait, il ne resterait personne pour gouverner avec."});
+    } else S.sursis=false;
     if(last){S.phase="end";render();return}
     S.idx++; S.year=YEARS[S.idx];
     rentrees().forEach(k=>S.chronicle.push({y:S.year,txt:"La paix fut signée avec "+nomGuerre(k)+"."}));
@@ -546,8 +559,10 @@ function sArchives(){
 function sEnd(){
   const etat=k=>word(k,S.g[k]);
   const {total,lignes}=score();
+  const chute = S.fin==="rupture";   // déclaré avant le jugement, qui s'en sert
   const jugement =
-      total>=110?"Un règne dont on parlera tant qu'il y aura des chroniques."
+      chute      ?"Ce qui avait été fait ne comptera pas : personne ne resta pour le tenir."
+    : total>=110?"Un règne dont on parlera tant qu'il y aura des chroniques."
     : total>=80 ?"Un grand règne. Le royaume légué ne ressemble pas à celui qu'on a reçu."
     : total>=50 ?"Un règne solide. Ce qui a été fait tiendra."
     : total>=25 ?"Un règne qui aura tenu, ce qui n'était pas acquis en 1479."
@@ -556,9 +571,10 @@ function sEnd(){
 
   app().innerHTML=`
   <div style="padding-top:48px"></div>
-  <div class="eyebrow">Fin de l'acte premier · décembre 1487</div>
-  <h1>Le royaume au bout<br>de neuf années</h1>
-  <div class="place">Bilan tenu par la chancellerie</div>
+  <div class="eyebrow">${chute?`Fin du règne · ${S.year}`:"Fin de l'acte premier · décembre 1487"}</div>
+  <h1>${chute?"Il ne restait personne<br>pour gouverner avec":"Le royaume au bout<br>de neuf années"}</h1>
+  <div class="place">${chute?"Les trois ordres ayant rompu, la couronne cessa d'être obéie":"Bilan tenu par la chancellerie"}</div>
+  ${chute?`<div class="body"><p class="dropcap">La noblesse en armes, les villes fermées, l'Église en rupture : aucun des trois corps du royaume ne reconnaissait plus la couronne. Ce ne fut pas une déposition — il n'y eut ni bataille ni sentence. Simplement, les ordres cessèrent d'arriver quelque part, puis partout. Ce qui avait été entrepris resta inachevé.</p></div>`:""}
   <table class="tally">
     ${Object.keys(GAUGES).map(k=>`<tr><td>${GAUGES[k].n}</td><td class="p${palier(S.g[k])}">${etat(k)}</td></tr>`).join("")}
     <tr><td>Trésor en réserve</td><td>${S.tresor}</td></tr>

@@ -176,9 +176,11 @@ C'est la pièce centrale. Trois règles :
 
 Et leur moyenne fait la **stabilité**, qui pèse sur toutes les entreprises et qui, sous « hostile », fait produire au royaume une affaire de plus chaque année.
 
+**La rupture générale.** Si les trois ordres tombent en rupture la même année, il ne reste personne pour gouverner avec : ni les grands, ni les villes, ni l'Église. Le règne n'est pas arrêté sur-le-champ — la chronique le constate, le bandeau l'annonce, et l'on a un an. Si la rupture tient encore à la fin de l'année suivante, l'acte s'arrête là quel que soit ce qui avait été entrepris. Remonter un seul des trois suffit à annuler le sursis.
+
 ### Le reste
 
-- `STEP_COST` / `STEP_MOD` — tenir les six lignes à « Suffisant » coûte 12 quand 1479 rapporte 9.
+- `STEP_COST` / `STEP_MOD` — tenir les six lignes à « Suffisant » coûte 24 quand 1479 rapporte 9 et une bonne année de 1487 dix-huit. On n'en tient jamais plus de deux ou trois : c'est le vrai arbitrage du jeu.
 - `RENTES` — les postes de recette sous leur nom d'époque, avec l'ordre qui les fournit. Le compte de l'année descend jusqu'au bout : rentrées, soldes, dotations, reste.
 - `bands()` — la forme du risque. `forme` appartient à l'option, pas au joueur.
 - `DETTE_MAX` — ce qu'on peut engager au-delà de la caisse. La dette non résorbée se paie en autorité et en crédit.

@@ -336,3 +336,11 @@
 .lg-j.stab .lg-jn{color:var(--ink)}
 .ef.stab-ligne{border-top:1px solid var(--rule);border-bottom:0;margin-top:4px}
 .ef.stab-ligne>span:first-child{color:var(--ink)}
+
+
+/* ═══════════ rupture générale ═══════════ */
+.rupture{
+  border:1px solid var(--cinnabar);border-left-width:3px;
+  padding:14px 16px;margin:18px 0;font-size:17px;line-height:1.5;color:var(--ink);
+}
+.rupture b{display:block;color:var(--cinnabar);font-weight:600;margin-bottom:5px}

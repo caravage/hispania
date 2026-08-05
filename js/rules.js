@@ -25,6 +25,15 @@ const MOTS_STABILITE = motsOrdre("f");
 const motStabilite = () => MOTS_STABILITE[palier(stabilite())];
 const SEUIL_TROUBLES = 30;
 
+/* La rupture générale. Quand les trois ordres sont simultanément en rupture,
+   il ne reste personne pour gouverner avec : ni les grands, ni les villes, ni
+   l'Église. Le règne ne se termine pas l'année même — on laisse un an, et
+   l'avertissement est visible partout — mais s'il n'a pas été redressé à la
+   fin de l'année suivante, il tombe. */
+const ORDRES = ["noblesse","clerge","cortes"];
+const ruptureGenerale = () => ORDRES.every(g=>palier(S.g[g])===0);
+const ordresEnRupture = () => ORDRES.filter(g=>palier(S.g[g])===0);
+
 
 /* La bande de résolution. Cinq largeurs qui totalisent 100.
    `forme` appartient à l'option, pas au joueur : certaines entreprises sont
@@ -198,11 +207,16 @@ function guerresEchues(){
 /* Le troisième groupe du bandeau n'existe que tant qu'il a un contenu.
    La France y figure toujours ; les guerres s'y ajoutent et s'en retirent. */
 function crises(){
+  // Voir plus bas : la rupture générale s'affiche avant de frapper.
   const out=Object.keys(GAUGES).filter(k=>GAUGES[k].gr==="dehors" && GAUGES[k].toujours)
     .map(k=>({type:"jauge", k, n:GAUGES[k].n, mot:word(k,S.g[k]), pal:palier(S.g[k])}));
   enGuerre().forEach(k=>out.push({type:"guerre", k, n:nomGuerre(k),
     mot:"depuis "+S.guerres[k], pal:0}));
   if(S.tresor<0) out.push({type:"dette", n:"Dette", mot:(-S.tresor)+" à rendre", pal:0});
+  if(ruptureGenerale()) out.push({type:"rupture", n:"Rupture générale",
+    mot:S.sursis?"dernière année":"les trois ordres", pal:0});
+  else if(ordresEnRupture().length===2) out.push({type:"alerte", n:"Deux ordres en rupture",
+    mot:ordresEnRupture().map(g=>GAUGES[g].n).join(" et "), pal:0});
   return out;
 }
 
