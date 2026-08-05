@@ -1,0 +1,17 @@
+/* tokens.css — palette, échelle typographique, mesure.
+   Un seul accent : le cinabre des rubriques manuscrites.
+   Le modifier ici le modifie partout. */
+
+:root{
+  --paper:#E4DFD3;
+  --paper-deep:#DAD4C5;
+  --ink:#23201B;
+  --ink-soft:#635C50;
+  --ink-faint:#8C8474;
+  --rule:#B6AE9C;
+  --rule-fine:#C9C2B2;
+  --cinnabar:#A32A17;
+  --measure:648px;
+  --serif:"EB Garamond",Georgia,serif;
+  --util:"Archivo Narrow","Arial Narrow",sans-serif;
+}

@@ -1,0 +1,147 @@
+/* components.css — options, manière, bande de résolution, budget, boutons, chronique. */
+
+/* ---------- boutons / options ---------- */
+.opts{margin-top:30px;display:flex;flex-direction:column;gap:0;border-top:1px solid var(--rule)}
+.opt{
+  border-bottom:1px solid var(--rule-fine);
+  padding:16px 2px 16px 0;cursor:pointer;background:none;border-left:0;border-right:0;border-top:0;
+  text-align:left;width:100%;font-family:var(--serif);color:var(--ink);
+  display:grid;grid-template-columns:1fr auto;gap:4px 18px;align-items:baseline;
+  transition:padding-left .16s ease;
+}
+.opt:hover,.opt:focus-visible{padding-left:12px;outline:none}
+.opt:focus-visible{box-shadow:inset 3px 0 0 var(--cinnabar)}
+.opt[aria-pressed="true"]{padding-left:12px;box-shadow:inset 3px 0 0 var(--cinnabar)}
+.opt-label{font-size:19.5px;line-height:1.35}
+.opt-tag{
+  font-family:var(--util);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--ink-faint);white-space:nowrap;padding-top:4px;
+}
+.opt[aria-pressed="true"] .opt-tag{color:var(--cinnabar)}
+.opt-note{grid-column:1/-1;font-size:16.5px;color:var(--ink-soft);font-style:italic}
+
+/* ---------- manière + seuil ---------- */
+.panel{margin-top:26px;border-top:1px solid var(--rule);padding-top:20px}
+.lbl{
+  font-family:var(--util);font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--ink-faint);margin-bottom:12px;
+}
+.modes{display:flex;gap:0;border:1px solid var(--rule);width:100%}
+.mode{
+  flex:1;padding:9px 4px;background:none;border:0;border-right:1px solid var(--rule);cursor:pointer;
+  font-family:var(--util);font-size:11.5px;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--ink-soft);
+}
+.mode:last-child{border-right:0}
+.mode[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.mode:focus-visible{outline:2px solid var(--cinnabar);outline-offset:-3px}
+
+/* ---------- la bande de résolution (élément signature) ---------- */
+.bandwrap{margin-top:22px}
+.band{display:flex;height:15px;width:100%;position:relative;border:1px solid var(--ink)}
+.seg{height:100%;position:relative}
+.seg+.seg{border-left:1px solid var(--ink)}
+.seg.b0{background:var(--ink)}
+.seg.b1{background:repeating-linear-gradient(90deg,var(--ink) 0 1px,transparent 1px 4px)}
+.seg.b2{background:repeating-linear-gradient(90deg,var(--ink) 0 1px,transparent 1px 9px)}
+.seg.b3{background:transparent}
+.seg.b4{background:repeating-linear-gradient(45deg,var(--cinnabar) 0 1px,transparent 1px 5px)}
+.band-keys{
+  display:flex;justify-content:space-between;margin-top:7px;
+  font-family:var(--util);font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-faint);
+}
+.needle{
+  position:absolute;top:-7px;bottom:-7px;width:2px;background:var(--cinnabar);
+  transform:translateX(-1px);transition:left .5s cubic-bezier(.2,.8,.3,1);z-index:3;
+}
+.needle::after{
+  content:"";position:absolute;top:-5px;left:-3px;border:4px solid transparent;border-top-color:var(--cinnabar);
+}
+.oddsline{
+  margin-top:14px;font-size:17px;color:var(--ink-soft);font-style:italic;
+}
+.mods{margin-top:12px}
+.mods summary{
+  font-family:var(--util);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--ink-faint);cursor:pointer;list-style:none;
+}
+.mods summary::-webkit-details-marker{display:none}
+.mods summary::before{content:"+ ";}
+.mods[open] summary::before{content:"− ";}
+.mods table{width:100%;border-collapse:collapse;margin-top:10px;font-family:var(--util);font-size:13px}
+.mods td{padding:3px 0;border-bottom:1px solid var(--rule-fine);color:var(--ink-soft)}
+.mods td:last-child{text-align:right;font-variant-numeric:tabular-nums;color:var(--ink);font-weight:500}
+
+/* ---------- budget ---------- */
+.purse{
+  display:flex;justify-content:space-between;align-items:baseline;
+  border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);
+  padding:12px 0;margin:26px 0 4px;
+  font-family:var(--util);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);
+}
+.purse .big{font-size:23px;letter-spacing:.02em;color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
+.purse .big.over{color:var(--cinnabar)}
+.pf{padding:15px 0;border-bottom:1px solid var(--rule-fine)}
+.pf-head{display:flex;justify-content:space-between;align-items:baseline;gap:14px;margin-bottom:9px}
+.pf-name{font-size:19px}
+.pf-cost{font-family:var(--util);font-size:11.5px;letter-spacing:.12em;color:var(--ink-faint);white-space:nowrap}
+.pf-desc{font-size:15.5px;color:var(--ink-faint);font-style:italic;margin-top:-6px;margin-bottom:9px}
+.steps{display:flex;border:1px solid var(--rule)}
+.step{
+  flex:1;padding:7px 2px;background:none;border:0;border-right:1px solid var(--rule);cursor:pointer;
+  font-family:var(--util);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);
+}
+.step:last-child{border-right:0}
+.step[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.step:focus-visible{outline:2px solid var(--cinnabar);outline-offset:-3px}
+.warn{font-size:16px;color:var(--cinnabar);font-style:italic;margin-top:9px}
+
+/* ---------- action principale ---------- */
+.act{
+  margin-top:34px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;
+}
+.btn{
+  font-family:var(--util);font-size:12.5px;letter-spacing:.18em;text-transform:uppercase;
+  background:var(--ink);color:var(--paper);border:1px solid var(--ink);
+  padding:13px 30px;cursor:pointer;
+}
+.btn:hover{background:var(--cinnabar);border-color:var(--cinnabar)}
+.btn:disabled{background:none;color:var(--ink-faint);border-color:var(--rule);cursor:not-allowed}
+.btn.ghost{background:none;color:var(--ink)}
+.btn.ghost:hover{background:var(--ink);color:var(--paper)}
+.btn:focus-visible{outline:2px solid var(--cinnabar);outline-offset:3px}
+
+/* ---------- résolution ---------- */
+.roll{
+  font-family:var(--util);font-size:64px;letter-spacing:-.02em;font-weight:400;
+  font-variant-numeric:tabular-nums;line-height:1;margin:6px 0 4px;
+}
+.verdict{
+  font-family:var(--util);font-size:12px;letter-spacing:.24em;text-transform:uppercase;
+  color:var(--cinnabar);font-weight:600;margin-bottom:22px;
+}
+.effects{margin-top:24px;border-top:1px solid var(--rule);padding-top:14px}
+.effects div{
+  display:flex;justify-content:space-between;padding:4px 0;
+  font-family:var(--util);font-size:13px;letter-spacing:.05em;color:var(--ink-soft);
+  border-bottom:1px solid var(--rule-fine);
+}
+.effects span:last-child{font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
+
+/* ---------- chronique ---------- */
+.chron{margin-top:8px}
+.chron .entry{margin-bottom:22px}
+.chron .entry .y{
+  font-family:var(--util);font-size:11px;letter-spacing:.2em;color:var(--ink-faint);
+  text-transform:uppercase;margin-bottom:3px;
+}
+.chron .entry p{font-size:18px}
+.dropcap::first-letter{
+  float:left;font-size:56px;line-height:.82;padding:5px 9px 0 0;color:var(--cinnabar);font-weight:600;
+}
+.fortune{
+  font-family:var(--util);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);
+}
+.tally{width:100%;border-collapse:collapse;margin-top:20px}
+.tally td{padding:8px 0;border-bottom:1px solid var(--rule-fine);font-size:17px}
+.tally td:last-child{text-align:right;font-family:var(--util);font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft)}

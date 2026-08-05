@@ -1,0 +1,120 @@
+/* injected.js — conséquences différées.
+   Ces événements ne se tirent pas : ils sont semés par une issue précédente
+   via `inject: ["id"]`, et remontent en tête du deck l'année suivante.
+   C'est ce qui fait qu'un règne se tient au lieu d'être une suite de tours :
+   une révolte mal éteinte en 1477 revient vous chercher en 1480.
+   Même structure que nodes.js. */
+
+const INJECTED = {
+ revolte_andalouse:{id:"revolte_andalouse", t:"Le feu andalou", place:"Cordoue",
+  body:["Les milices que l'on a armées pour la guerre du Portugal règlent maintenant leurs comptes entre elles. Cordoue est aux mains d'un comité de quartier."],
+  opts:[
+   {label:"Envoyer un corregidor avec pleins pouvoirs.", voie:"historique", port:"justice", base:46, cost:2,
+    out:{crit:{t:"Le corregidor est chassé de la ville. L'autorité royale est publiquement humiliée.",e:{au:-14,pr:-6}},
+      fail:{t:"Il s'installe mais ne gouverne pas.",e:{au:-5}},
+      part:{t:"L'ordre revient lentement, quartier par quartier.",e:{au:5,pr:3}},
+      succ:{t:"Cordoue est reprise en main sans effusion et le corregidor devient un modèle.",e:{au:10,pr:6,co:5}},
+      tri:{t:"L'affaire fonde une pratique : partout où une ville se déchire, la couronne envoie désormais un juge plutôt qu'une armée.",e:{au:14,pr:9,co:9,flag:"corregidores"}}}},
+   {label:"Laisser les milices s'épuiser et traiter avec le vainqueur.", voie:"divergente", port:"cour", base:54, cost:0,
+    out:{crit:{t:"La ville est ravagée et le vainqueur ne doit rien à personne.",e:{pr:-12,au:-10,dv:4}},
+      fail:{t:"Le conflit s'étend aux villages voisins.",e:{pr:-6,dv:3}},
+      part:{t:"Un parti l'emporte et prête serment. Cordoue est calme et abîmée.",e:{pr:-2,au:3,dv:4}},
+      succ:{t:"Le vainqueur, épuisé, se rallie sans conditions.",e:{au:7,no:4,dv:5}},
+      tri:{t:"Les deux partis, ruinés, demandent eux-mêmes l'arbitrage royal. On obtient sans rien dépenser ce qu'une armée n'aurait pas donné.",e:{au:12,pr:4,no:7,dv:7}}}}]},
+
+ guerre_privee:{id:"guerre_privee", t:"Guerre privée en Estrémadure", place:"Cáceres",
+  body:["Deux maisons que l'on avait chargées de pacifier la province se font la guerre à visage découvert, chacune au nom du roi."],
+  opts:[
+   {label:"Convoquer les deux chefs et les emprisonner.", voie:"divergente", port:"justice", base:42, cost:2,
+    out:{crit:{t:"Ils refusent de venir et se coalisent. La province échappe entièrement.",e:{au:-16,no:-12}},
+      fail:{t:"L'un vient, l'autre non, et l'équilibre est rompu au profit du plus rusé.",e:{au:-6,no:-5}},
+      part:{t:"Les deux sont arrêtés. Leurs clientèles s'agitent.",e:{au:8,no:-8}},
+      succ:{t:"L'arrestation est nette et publique. La leçon porte au-delà de l'Estrémadure.",e:{au:13,no:-6,pr:5}},
+      tri:{t:"Le procès qui suit fixe une jurisprudence : la guerre privée devient un crime contre la couronne.",e:{au:18,no:-4,pr:8,flag:"fin_guerres_privees"}}}},
+   {label:"Arbitrer entre eux et confirmer un partage.", voie:"historique", port:"cour", base:56, cost:1,
+    out:{crit:{t:"Le partage mécontente les deux et la guerre reprend au printemps.",e:{au:-9,pr:-6}},
+      fail:{t:"L'accord tient un an.",e:{au:-3}},
+      part:{t:"La province se calme. La couronne n'y a rien gagné qu'un peu de paix.",e:{pr:4}},
+      succ:{t:"L'arbitrage est respecté et les deux maisons servent ensuite loyalement.",e:{no:9,pr:5,au:5}},
+      tri:{t:"Le partage est si équitable qu'il devient la référence des litiges suivants.",e:{no:12,pr:7,au:9}}}}]},
+
+ defection_noble:{id:"defection_noble", t:"Défection", place:"Villena",
+  body:["Une grande maison passe ouvertement au Portugal, avec ses places et ses vassaux. La perte est militaire ; l'exemple est pire."],
+  opts:[
+   {label:"Assiéger et reprendre les places, quel qu'en soit le prix.", voie:"historique", port:"guerre", base:44, cost:4,
+    out:{crit:{t:"Le siège échoue et l'on a montré à tous les grands que l'on ne peut pas les punir.",e:{au:-18,no:-8,t:-6}},
+      fail:{t:"Deux places sur cinq sont reprises. C'est cher et incomplet.",e:{t:-5,au:-4}},
+      part:{t:"Les places tombent. La maison est brisée, la province appauvrie.",e:{au:9,pr:-5,no:-6}},
+      succ:{t:"La reprise est rapide et le châtiment mesuré. L'exemple porte.",e:{au:14,no:-3,t:2}},
+      tri:{t:"La maison se rend d'elle-même en voyant l'artillerie royale. Deux autres seigneurs hésitants viennent aussitôt prêter serment.",e:{au:19,no:6,t:5}}}},
+   {label:"Négocier le retour : pardon complet, titres conservés, places rendues.", voie:"divergente", port:"diplomatie", base:52, cost:1,
+    out:{crit:{t:"Le pardon est pris pour de la faiblesse. Deux autres maisons tentent leur chance.",e:{au:-14,no:-6,dv:4}},
+      fail:{t:"La négociation traîne et les places restent portugaises.",e:{au:-7,dv:3}},
+      part:{t:"La maison revient. Elle a gagné à trahir, et tout le monde l'a vu.",e:{au:-2,no:6,dv:5}},
+      succ:{t:"Le retour est présenté comme une réconciliation générale et rallie plusieurs hésitants.",e:{au:6,no:12,dv:6}},
+      tri:{t:"La générosité paie au-delà de toute prévision : trois maisons portugaises passent en sens inverse.",e:{au:11,no:16,t:4,dv:8}}}}]},
+
+ crise_catalane:{id:"crise_catalane", t:"Barcelone se souvient", place:"Barcelone",
+  body:["La Catalogne sort à peine de dix ans de guerre civile. Les Corts refusent de siéger tant que les fueros n'auront pas été jurés dans les formes anciennes."],
+  opts:[
+   {label:"Jurer les fueros publiquement et sans réserve.", voie:"historique", port:"diplomatie", base:60, cost:1,
+    out:{crit:{t:"On exige en plus le rétablissement de privilèges abolis. Le serment devient une capitulation.",e:{au:-12,co:5}},
+      fail:{t:"Le serment est prêté sans que la confiance revienne.",e:{au:-4}},
+      part:{t:"Les Corts siègent. Rien n'est obtenu, rien n'est perdu.",e:{co:5}},
+      succ:{t:"Le serment apaise durablement la Catalogne, qui vote un service modeste.",e:{co:10,t:4,au:5}},
+      tri:{t:"La réconciliation catalane est complète et Barcelone rouvre ses chantiers navals au service du roi.",e:{co:14,t:8,pr:7,au:8}}}},
+   {label:"Suspendre les Corts et gouverner par lieutenant général.", voie:"hérétique", port:"justice", base:28, cost:3,
+    out:{crit:{t:"La Catalogne se soulève. Une seconde guerre civile éclate, et il faudra dix ans pour l'éteindre.",e:{au:-22,co:-20,pr:-14,dv:12}},
+      fail:{t:"Le lieutenant ne peut rien faire appliquer et le pays se ferme.",e:{au:-10,co:-12,dv:8}},
+      part:{t:"Le gouvernement par lieutenant tient, dans une hostilité générale.",e:{au:6,co:-14,dv:10}},
+      succ:{t:"L'autorité royale s'impose en Catalogne comme elle ne l'avait jamais été. Le prix se paiera plus tard.",e:{au:14,co:-12,t:6,dv:13,flag:"catalogne_soumise"}},
+      tri:{t:"La soumission est acceptée sans révolte, moyennant des compensations économiques. Le pactisme catalan est entamé pour la première fois.",e:{au:19,co:-6,t:11,dv:16,flag:"catalogne_soumise"}}}}]},
+
+ pression_dominicains:{id:"pression_dominicains", t:"Les dominicains insistent", place:"Ávila",
+  body:["Le prieur de Santo Tomás fait porter à la cour un mémoire de trois cents pages. Il ne demande plus, il avertit."],
+  opts:[
+   {label:"Céder et activer la bulle.", voie:"historique", port:"foi", base:60, cost:1,
+    out:{crit:{t:"Le tribunal, installé tard et sous pression, se montre d'autant plus dur.",e:{pr:-12,t:5,flag:"inquisition"}},
+      fail:{t:"L'installation est bâclée.",e:{pr:-8,t:3,flag:"inquisition"}},
+      part:{t:"Le Saint-Office s'installe. Les départs reprennent.",e:{t:7,pr:-9,flag:"inquisition"}},
+      succ:{t:"Le tribunal est établi sous stricte tutelle royale.",e:{t:10,au:6,pr:-9,flag:"inquisition"}},
+      tri:{t:"L'institution est royale de bout en bout et Rome n'y a aucune prise.",e:{t:13,au:10,ro:4,pr:-9,flag:"inquisition"}}}},
+   {label:"Refuser et interdire aux ordres mendiants de prêcher sur la question.", voie:"hérétique", port:"foi", base:30, cost:2,
+    out:{crit:{t:"Les prédicateurs passent outre. Des émeutes éclatent dans quatre villes.",e:{au:-16,pr:-10,ro:-8,dv:9}},
+      fail:{t:"L'interdiction est mal reçue et mal suivie.",e:{ro:-8,au:-6,dv:6}},
+      part:{t:"Le silence est obtenu dans les grandes villes. La pression se déplace vers Rome.",e:{ro:-6,pr:7,dv:8}},
+      succ:{t:"Les ordres se taisent. Le crédit sévillan tient et la crise s'éteint faute de combustible.",e:{pr:13,t:4,dv:10,flag:"protection_conversos"}},
+      tri:{t:"L'interdiction, argumentée en droit canon, est acceptée jusqu'à Rome. Une doctrine nouvelle s'installe.",e:{pr:17,t:7,au:8,dv:13,flag:"protection_conversos",flag2:"doctrine_faits"}}}}]},
+
+ schisme_clerc:{id:"schisme_clerc", t:"Un clergé divisé", place:"Ávila",
+  body:["Une partie du clergé castillan refuse de reconnaître l'autorité royale en matière de foi et en appelle directement à Rome. C'est la situation qu'aucun roi ne veut connaître."],
+  opts:[
+   {label:"Reculer : accepter la bulle et rétablir la concorde avec Rome.", voie:"historique", port:"foi", base:56, cost:2,
+    out:{crit:{t:"Le recul est humiliant et sans contrepartie.",e:{au:-12,ro:6,flag:"inquisition"}},
+      fail:{t:"On rétablit la paix religieuse en perdant la face.",e:{au:-6,ro:9,flag:"inquisition"}},
+      part:{t:"L'affaire est close. Personne n'a gagné.",e:{ro:12,au:-2,flag:"inquisition"}},
+      succ:{t:"Le recul est habillé en concession négociée et Rome accorde des compensations fiscales.",e:{ro:16,t:6,flag:"inquisition"}},
+      tri:{t:"La réconciliation s'accompagne du droit de présentation aux évêchés — plus que ce qu'on avait perdu.",e:{ro:18,t:9,au:8,flag:"inquisition",flag2:"patronato"}}}},
+   {label:"Tenir : convoquer un concile national du clergé castillan.", voie:"hérétique", port:"foi", base:24, cost:4,
+    out:{crit:{t:"Le concile se retourne contre la couronne et Rome menace de l'interdit. Le royaume est au bord du schisme.",e:{ro:-24,au:-18,dv:14}},
+      fail:{t:"Le concile ne se réunit pas. L'autorité royale sur le clergé est ruinée.",e:{ro:-12,au:-12,dv:9}},
+      part:{t:"Le concile siège et vote une formule ambiguë. Rien n'est résolu, rien n'est perdu.",e:{au:4,ro:-8,dv:11}},
+      succ:{t:"Le clergé castillan se range derrière son roi contre Rome. C'est inouï, et cela tient.",e:{au:16,ro:-10,dv:14,flag:"eglise_nationale"}},
+      tri:{t:"Un concordat de fait s'établit : l'Église de Castille reconnaît le roi en matière disciplinaire. Rome finit par l'accepter contre paiement.",e:{au:22,ro:-4,t:8,dv:18,flag:"eglise_nationale"}}}}]},
+
+ cortes_exigeantes:{id:"cortes_exigeantes", t:"Ce que les Cortès ont appris", place:"Valladolid",
+  body:["Les procureurs, ayant obtenu le droit de regard sur la dépense, demandent maintenant à être consultés sur les nominations aux offices royaux."],
+  opts:[
+   {label:"Refuser fermement et rappeler les limites du contrat.", voie:"historique", port:"justice", base:48, cost:1,
+    out:{crit:{t:"Les Cortès suspendent le vote du service. Le budget de l'année est perdu.",e:{co:-16,t:-8}},
+      fail:{t:"Le refus est accepté de mauvaise grâce et le service voté au rabais.",e:{co:-8,t:-3}},
+      part:{t:"La limite est tenue. Les procureurs reviendront à la charge.",e:{au:6,co:-4}},
+      succ:{t:"Le refus est motivé si clairement que les procureurs l'admettent et votent normalement.",e:{au:10,co:3}},
+      tri:{t:"La distinction entre consentir l'impôt et gouverner est fixée par écrit. Le contrat en sort renforcé.",e:{au:14,co:8,t:6}}}},
+   {label:"Accorder un droit de remontrance sur les offices, sans droit de veto.", voie:"hérétique", port:"admin", base:34, cost:2,
+    out:{crit:{t:"La remontrance devient un veto de fait. La couronne ne nomme plus librement.",e:{au:-18,co:14,dv:10}},
+      fail:{t:"Le dispositif est confus et paralyse les nominations.",e:{au:-8,dv:7}},
+      part:{t:"Les remontrances sont formulées et généralement ignorées. Cela suffit à contenter.",e:{co:10,dv:9}},
+      succ:{t:"Le mécanisme fonctionne : les Cortès signalent les abus, la couronne nomme. Les deux y gagnent.",e:{co:16,au:8,dv:12,flag:"remontrance"}},
+      tri:{t:"Ce qui naît là — une monarchie qui écoute sans obéir — n'a d'équivalent nulle part en Europe.",e:{co:20,au:14,t:8,dv:16,flag:"remontrance",flag2:"monarchie_mixte"}}}}]}
+};

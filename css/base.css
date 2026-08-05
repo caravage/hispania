@@ -1,0 +1,63 @@
+/* base.css — réinitialisation, corps de texte, bandeau, titres, œuvres. */
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--serif);
+  font-size:19px;
+  line-height:1.62;
+  padding:0 20px 120px;
+  position:relative;
+}
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.5;
+  background-image:radial-gradient(circle at 12% 30%,rgba(120,105,80,.05) 0 1px,transparent 1px),
+                   radial-gradient(circle at 68% 71%,rgba(120,105,80,.045) 0 1px,transparent 1px);
+  background-size:37px 37px,53px 53px;
+}
+.wrap{max-width:var(--measure);margin:0 auto;position:relative;z-index:1}
+
+/* ---------- bandeau ---------- */
+.ledger{
+  position:sticky;top:0;z-index:20;background:var(--paper);
+  border-bottom:1px solid var(--rule);
+  margin:0 -20px;padding:0 20px;
+}
+.ledger-in{max-width:var(--measure);margin:0 auto;padding:11px 0 10px}
+.ledger-row{
+  display:flex;flex-wrap:wrap;gap:4px 22px;align-items:baseline;
+  font-family:var(--util);font-size:12px;letter-spacing:.11em;text-transform:uppercase;
+  color:var(--ink-soft);
+}
+.ledger-row b{font-weight:600;color:var(--ink);letter-spacing:.06em}
+.ledger .yr{font-weight:600;color:var(--ink);letter-spacing:.16em}
+.coin{color:var(--cinnabar);font-weight:600}
+.delta{color:var(--cinnabar);font-weight:600;font-size:11px;margin-left:3px}
+
+/* ---------- titres ---------- */
+.eyebrow{
+  font-family:var(--util);font-size:11.5px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--ink-faint);margin-bottom:14px;
+}
+h1{font-size:33px;font-weight:600;line-height:1.14;letter-spacing:-.01em;margin-bottom:6px}
+h2{font-size:26px;font-weight:600;line-height:1.2;margin-bottom:4px}
+.place{font-style:italic;color:var(--ink-soft);font-size:17px;margin-bottom:26px}
+.rule{height:1px;background:var(--rule-fine);margin:34px 0}
+.rule-strong{height:1px;background:var(--rule);margin:34px 0}
+
+/* ---------- corps ---------- */
+.body p{margin-bottom:15px}
+.body p:last-child{margin-bottom:0}
+.aside{font-size:17px;color:var(--ink-soft);font-style:italic}
+
+/* ---------- œuvre ---------- */
+figure{margin:0 0 28px}
+figure img{width:100%;display:block;filter:saturate(.86) contrast(1.02)}
+figcaption{
+  font-family:var(--util);font-size:11px;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--ink-faint);margin-top:7px;
+}
+figure.broken{display:none}
+

@@ -1,0 +1,10 @@
+/* responsive.css — étroit d'abord, et respect de prefers-reduced-motion. */
+
+@media(max-width:520px){
+  body{font-size:17.5px;padding:0 16px 100px}
+  h1{font-size:27px}h2{font-size:22px}
+  .roll{font-size:48px}
+  .opt-label{font-size:18px}
+  .step,.mode{font-size:9.5px;letter-spacing:.05em}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
