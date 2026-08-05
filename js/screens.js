@@ -28,28 +28,37 @@ function effacerSauvegarde(){ try{ localStorage.removeItem(SAVE); }catch(e){} }
 let legendeOuverte=false;
 
 function ledger(){
-  const groupes=GROUPES.map(gr=>{
+  const annee = S.phase==="prologue" && PROLOGUE[S.pro_i] ? PROLOGUE[S.pro_i].y : S.year;
+
+  const groupes=GROUPES.filter(gr=>gr.k!=="dehors").map(gr=>{
     const js=Object.keys(GAUGES).filter(k=>GAUGES[k].gr===gr.k);
     return `<div class="lg-grp"><span class="lg-gn">${gr.n}</span>${js.map(k=>
-      `<span class="lg-j"><span class="lg-jn">${GAUGES[k].n}</span> <b class="p${palier(S.g[k])}">${word(k,S.g[k])}</b></span>`).join("")}</div>`;
+      `<span class="lg-j" title="${GAUGES[k].n} — ${GAUGES[k].d.replace(/"/g,"&quot;")}"><span class="lg-jn">${GAUGES[k].n}</span> <b class="p${palier(S.g[k])}">${word(k,S.g[k])}</b></span>`).join("")}</div>`;
   }).join("");
 
-  const guerres=enGuerre().map(k=>`<span class="war">${nomGuerre(k)}</span>`).join("");
-
-  // Pendant le prologue, l'année affichée est celle qu'on décide, pas 1479.
-  const annee = S.phase==="prologue" && PROLOGUE[S.pro_i] ? PROLOGUE[S.pro_i].y : S.year;
+  // Le troisième groupe n'apparaît que s'il a un contenu.
+  const cr=crises();
+  const bloc=cr.length?`<div class="lg-grp crise"><span class="lg-gn">${GROUPES.find(g=>g.k==="dehors").n}</span>${
+    cr.map(c=>c.type==="jauge"
+      ? `<span class="lg-j" title="${GAUGES[c.k].d.replace(/"/g,"&quot;")}"><span class="lg-jn">${c.n}</span> <b class="p${c.pal}">${c.mot}</b></span>`
+      : `<span class="lg-j alerte"><span class="lg-jn">${c.n}</span> <b>${c.mot}</b></span>`).join("")}</div>`:"";
 
   document.getElementById("ledger").innerHTML=`
     <div class="lg-top">
       <span class="yr">${annee}</span>
       <span class="lg-tresor ${S.tresor<0?"dette":""}">Trésor <b>${S.tresor}</b></span>
-      ${guerres}
-      <button class="lg-aide" id="aide" aria-expanded="${legendeOuverte}">${legendeOuverte?"Masquer la légende":"Que veut dire tout ceci ?"}</button>
+      <span class="lg-boutons">
+        ${S.archives.length?`<button class="lg-ico" id="arch" title="Les archives du règne" aria-label="Les archives du règne">▤</button>`:""}
+        <button class="lg-ico" id="aide" title="Que veut dire tout ceci ?" aria-label="Légende" aria-expanded="${legendeOuverte}">?</button>
+      </span>
     </div>
-    <div class="lg-jauges">${groupes}</div>
+    <div class="lg-jauges">${groupes}${bloc}</div>
     ${legendeOuverte?legendeHTML():""}`;
+
   const a=document.getElementById("aide");
   if(a) a.onclick=()=>{ legendeOuverte=!legendeOuverte; ledger(); };
+  const ar=document.getElementById("arch");
+  if(ar) ar.onclick=()=>{ if(S.phase!=="archives"){S.retour=S.phase;S.phase="archives";render();} };
 }
 
 function legendeHTML(){
@@ -59,6 +68,28 @@ function legendeHTML(){
       <div class="gl-d">${GAUGES[k].d}</div>
       <div class="gl-w">${GAUGES[k].w.map((m,i)=>`<span class="p${i}">${m}</span>`).join(" · ")}</div></div>`).join("")}
   </div>`;
+}
+
+/* Repère les noms propres connus dans un texte affiché et leur pose une
+   infobulle. Une seule fois par nom et par paragraphe : un paragraphe qui
+   répète « Grenade » quatre fois deviendrait illisible. Les clés les plus
+   longues passent d'abord, pour que « Medina del Campo » l'emporte sur
+   « Medina ». */
+const CLES_LIEUX = Object.keys(LIEUX).sort((a,b)=>b.length-a.length);
+const ECHAPPE = t => t.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+/* Une seule alternation, un seul passage : indispensable, car un remplacement
+   séquentiel finit par retrouver un nom à l'intérieur du title qu'il vient
+   d'écrire, et le balisage éclate. */
+const RE_LIEUX = new RegExp("(?<![\\p{L}\\p{M}])("+CLES_LIEUX.map(ECHAPPE).join("|")+")(?![\\p{L}\\p{M}])","gu");
+
+function glose(txt){
+  if(!txt) return txt;
+  const vus={};
+  return String(txt).replace(RE_LIEUX,(m)=>{
+    if(vus[m]) return m;          // une fois par nom et par paragraphe
+    vus[m]=true;
+    return `<span class="lieu" title="${LIEUX[m].replace(/"/g,"&quot;")}">${m}</span>`;
+  });
 }
 
 function figHTML(k){
@@ -120,9 +151,9 @@ function sPrologue(){
   app().innerHTML=`
   <div style="padding-top:40px"></div>
   <div class="eyebrow">Les années d'avant · ${S.pro_i+1} sur ${PROLOGUE.length}</div>
-  <h2>${p.t}</h2>
-  <div class="place">${p.place}</div>
-  <div class="body"><p class="dropcap">${p.body}</p></div>
+  <h2>${glose(p.t)}</h2>
+  <div class="place">${glose(p.place)}</div>
+  <div class="body"><p class="dropcap">${glose(p.body)}</p></div>
   <div class="opts pro">${p.opts.map((o,i)=>`
     <button class="opt" data-i="${i}">
       <span class="opt-label">${o.label}</span>
@@ -216,13 +247,10 @@ function sBudget(){
    nu : la jauge dont dépend l'option, son état, et une barre pleine à hauteur
    de la réussite. Le détail chiffré reste dépliable pour qui veut vérifier. */
 function chanceHTML(o,choisie){
-  const {T,rows}=computeThreshold(o);
-  const w=bands(T,o.forme);
-  const r=Math.round(reussite(w));
+  const {pct,rows}=chance(o);
   const j=PORT_JAUGE[o.port];
   const mq=manque(o);
-  const mots=["très douteuse","douteuse","incertaine","favorable","très favorable"];
-  const cran=r<15?0:r<30?1:r<48?2:r<66?3:4;
+  const cran=pct<15?0:pct<30?1:pct<48?2:pct<66?3:4;
   return `
     <div class="chance">
       <div class="ch-tags">
@@ -230,18 +258,19 @@ function chanceHTML(o,choisie){
         <span class="ch-tag">${GAUGES[j].n} <b class="p${palier(S.g[j])}">${word(j,S.g[j])}</b></span>
         ${o.cost?`<span class="ch-tag ${mq?"manque":""}">${o.cost} du trésor${mq?` · il en manque ${mq}`:""}</span>`:`<span class="ch-tag">sans frais</span>`}
       </div>
-      <div class="ch-bar"><div class="ch-fill p${cran}" style="width:${r}%"></div></div>
-      <div class="ch-mot">Issue <b class="p${cran}">${mots[cran]}</b>
+      <div class="ch-bar"><div class="ch-fill p${cran}" style="width:${pct}%"></div></div>
+      <div class="ch-mot">Chance de réussite <b class="p${cran}">${pct} %</b>
         ${choisie?`<span class="ch-detail" data-d="1">le détail</span>`:""}</div>
       <div class="ch-rows" hidden><table>${rows.map(x=>
         `<tr><td>${x[0]}</td><td>${x[1]>0?"+":""}${x[1]}</td></tr>`).join("")}
-        <tr><td><b>Seuil</b></td><td><b>${T}</b></td></tr></table></div>
+        <tr><td><b>Chance de réussir</b></td><td><b>${pct} %</b></td></tr></table></div>
     </div>`;
 }
 
 function sEvent(){
   const ev=S.year_events[S.ev_i];
   if(!ev){ S.phase="chronicle"; render(); return; }
+  if(ev.petit) return sPetit(ev);
   if(!S.pending) S.pending={opt:null, rolled:null, ordre:null};
 
   /* La glose en italique est passée à l'écran de résolution : ici, sous chaque
@@ -260,10 +289,10 @@ function sEvent(){
   <div style="padding-top:40px"></div>
   <div class="eyebrow">${S.year} · Situation ${S.ev_i+1} sur ${S.year_events.length}</div>
   ${S.ev_i===0&&S.yearNote?`<div class="yearnote">${S.yearNote}</div>`:""}
-  <h2>${ev.t}</h2>
-  <div class="place">${ev.place}</div>
+  <h2>${glose(ev.t)}</h2>
+  <div class="place">${glose(ev.place)}</div>
   ${figHTML(ev.art)}
-  <div class="body">${ev.body.map((p,i)=>`<p${i===0?' class="dropcap"':''}>${p}</p>`).join("")}</div>
+  <div class="body">${ev.body.map((p,i)=>`<p${i===0?' class="dropcap"':''}>${glose(p)}</p>`).join("")}</div>
   <div class="opts">${opts}</div>
   <div class="act">
     <button class="btn" id="cast" ${S.pending.opt===null?"disabled":""}>${S.pending.opt===null?"Choisir une réponse":"Décider"}</button>
@@ -288,6 +317,43 @@ function sEvent(){
 }
 
 
+/* Une affaire courante : on tranche, c'est réglé, on passe. Pas de bande, pas
+   de seuil, pas de coût. Le résultat s'affiche sous la réponse retenue. */
+function sPetit(ev){
+  if(!S.pending) S.pending={opt:null};
+  const choisi=S.pending.opt;
+
+  app().innerHTML=`
+  <div style="padding-top:40px"></div>
+  <div class="eyebrow">${S.year} · Affaire courante</div>
+  <h2>${glose(ev.t)}</h2>
+  <div class="place">${glose(ev.place)}</div>
+  <div class="body"><p>${glose(ev.body)}</p></div>
+  ${choisi===null?`
+    <div class="opts">${ev.opts.map((o,i)=>`
+      <button class="opt" data-i="${i}"><span class="opt-label">${o.label}</span></button>`).join("")}</div>`
+  :`
+    <div class="res-opt">${ev.opts[choisi].label}</div>
+    <div class="body"><p>${glose(ev.opts[choisi].txt)}</p></div>
+    ${S.pending.eff && S.pending.eff.length?`<div class="effects">${S.pending.eff.map(effetHTML).join("")}</div>`:`<div class="rien">Rien n'en est resté au registre.</div>`}
+    <div class="act"><button class="btn" id="next">Poursuivre</button></div>`}`;
+
+  app().querySelectorAll(".opt").forEach(b=>b.onclick=()=>{
+    const i=+b.dataset.i;
+    S.pending.opt=i;
+    S.pending.eff=apply(ev.opts[i].e||{});
+    S.archives.push({y:S.year, ev:ev.t, place:ev.place, opt:ev.opts[i].label,
+      bande:"Affaire courante", bi:2, txt:ev.opts[i].txt, petit:true});
+    render(); animerChiffres();
+  });
+  const n=document.getElementById("next");
+  if(n) n.onclick=()=>{
+    S.pending=null; S.ev_i++; sauver();
+    S.phase = S.ev_i<S.year_events.length ? "event" : "chronicle";
+    render();
+  };
+}
+
 /* Une jauge qui bouge sans changer de mot ne mérite qu'une flèche : dire
    « établie → établie » n'apprend rien. Si elle change de palier, on le dit. */
 function effetHTML(e){
@@ -295,16 +361,37 @@ function effetHTML(e){
   if(e.type==="jauge"){
     const monte=e.sens>0;
     const fl=`<span class="fleche ${monte?"up":"down"}">${monte?"▲":"▼"}</span>`;
-    const txt = e.palAv===e.palAp
-      ? `${fl}<span class="ef-mot p${e.palAp}">${e.motAp}</span>`
-      : `${fl}<span class="ef-mot"><s>${e.motAv}</s> <b class="p${e.palAp}">${e.motAp}</b></span>`;
-    return `<div class="ef"><span>${e.n}</span><span>${txt}</span></div>`;
+    const mot = e.palAv===e.palAp
+      ? `<span class="ef-mot p${e.palAp}">${e.motAp}</span>`
+      : `<span class="ef-mot chg">${e.motAv} → <b class="p${e.palAp}">${e.motAp}</b></span>`;
+    // data-de / data-a : le compteur part de l'ancienne valeur et va à la neuve.
+    return `<div class="ef"><span>${e.n}</span><span>${fl}${mot}
+      <b class="ef-nb ${monte?"pos":"neg"}" data-de="${e.av}" data-a="${e.ap}">${e.av}</b></span></div>`;
   }
   if(e.type==="exploit") return `<div class="ef marque ${e.mauvais?"neg":""}"><span>${e.mauvais?"Échec durable":"Ce que le règne retiendra"}</span><span>${e.n}</span></div>`;
-  if(e.type==="perte")   return `<div class="ef marque neg"><span>Perdu</span><span>${e.n}</span></div>`;
+  if(e.type==="perte")   return `<div class="ef marque neg"><span>Repris</span><span>${e.n}</span></div>`;
   if(e.type==="guerre")  return `<div class="ef marque neg"><span>Entrée en guerre</span><span>${e.n}</span></div>`;
   if(e.type==="paix")    return `<div class="ef marque"><span>Paix</span><span>${e.n}</span></div>`;
   return "";
+}
+
+/* Le décompte. Le seul mouvement du jeu avec le jet de dé, et pour la même
+   raison : c'est le moment où l'on apprend quelque chose. Respecte
+   prefers-reduced-motion en posant directement la valeur d'arrivée. */
+function animerChiffres(){
+  const sec=window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  document.querySelectorAll(".ef-nb").forEach(el=>{
+    const de=+el.dataset.de, a=+el.dataset.a;
+    if(sec || de===a){ el.textContent=a; return; }
+    const t0=performance.now(), duree=520+Math.min(480,Math.abs(a-de)*28);
+    const pas=now=>{
+      const k=Math.min(1,(now-t0)/duree);
+      const doux=1-Math.pow(1-k,3);
+      el.textContent=Math.round(de+(a-de)*doux);
+      if(k<1) requestAnimationFrame(pas); else el.textContent=a;
+    };
+    requestAnimationFrame(pas);
+  });
 }
 
 function sResolve(){
@@ -332,7 +419,7 @@ function sResolve(){
   </div>
   <div class="roll">${roll}</div>
   <div class="verdict b${bi}">${BAND_NAMES[bi]} · seuil ${T}</div>
-  <div class="body"><p>${res.t}</p></div>
+  <div class="body"><p>${glose(res.t)}</p></div>
   ${eff.length?`<div class="effects">${eff.map(effetHTML).join("")}</div>`:""}
   <div class="act"><button class="btn" id="next">Poursuivre</button></div>`;
 
@@ -356,8 +443,9 @@ function bilanAnneeHTML(){
       : `<span class="fleche ${d>0?"up":"down"}">${d>0?"▲":"▼"}</span>`;
     const mot = pAv===pAp
       ? `<span class="ef-mot p${pAp}">${word(k,ap)}</span>`
-      : `<span class="ef-mot"><s>${word(k,av)}</s> <b class="p${pAp}">${word(k,ap)}</b></span>`;
-    return `<div class="ef"><span>${GAUGES[k].n}</span><span>${fl}${mot}</span></div>`;
+      : `<span class="ef-mot chg">${word(k,av)} → <b class="p${pAp}">${word(k,ap)}</b></span>`;
+    return `<div class="ef"><span>${GAUGES[k].n}</span><span>${fl}${mot}
+      <b class="ef-nb ${d>0?"pos":d<0?"neg":""}" data-de="${av}" data-a="${ap}">${av}</b></span></div>`;
   }).join("");
   return `
     <div class="rule"></div>
@@ -381,21 +469,20 @@ function sChron(){
     :`<div class="entry"><p class="dropcap">Il ne se passa rien cette année-là que l'on jugeât digne d'être écrit, ce qui, dans ce royaume, était déjà quelque chose.</p></div>`}</div>
   ${acquisAnnee.length||perdusAnnee.length?`
     <div class="rule"></div>
-    <div class="eyebrow">Fixé cette année</div>
+    <div class="eyebrow">Ce que l'année laisse au règne</div>
     <div class="acquis">
       ${acquisAnnee.map(k=>`<div class="aq${EXPLOITS[k].vp<0?" bad":""}">
         <div class="aq-n">${EXPLOITS[k].n}</div><div class="aq-d">${EXPLOITS[k].d}</div></div>`).join("")}
       ${perdusAnnee.map(k=>`<div class="aq lost">
-        <div class="aq-n">${EXPLOITS[k].n}</div><div class="aq-d">${(EXPLOITS[k].perte||{}).d||""}</div></div>`).join("")}
+        <div class="aq-n">${EXPLOITS[k].n}<span class="aq-y">repris</span></div>
+        <div class="aq-d">${(EXPLOITS[k].perte||{}).d||""}</div></div>`).join("")}
     </div>`:""}
   ${bilanAnneeHTML()}
   <div class="rule-strong"></div>
   <div class="act">
     <button class="btn" id="n">${last?"Clore l'acte premier":"Passer à "+(S.year+1)}</button>
-    <button class="btn ghost" id="arch">Les archives du règne</button>
   </div>`;
-
-  document.getElementById("arch").onclick=()=>{S.retour="chronicle";S.phase="archives";render()};
+  animerChiffres();
   document.getElementById("n").onclick=()=>{
     const d=soldeDette();
     if(last){S.phase="end";render();return}
@@ -472,8 +559,6 @@ function sEnd(){
     `<div class="entry"><div class="y">${c.y}</div><p>${c.txt}</p></div>`).join("")}</div>
   <div class="act">
     <button class="btn" id="again">Reprendre en 1479</button>
-    <button class="btn ghost" id="arch">Les archives du règne</button>
   </div>`;
-  document.getElementById("arch").onclick=()=>{S.retour="end";S.phase="archives";render()};
   document.getElementById("again").onclick=()=>{effacerSauvegarde();location.reload()};
 }

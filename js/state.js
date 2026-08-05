@@ -10,12 +10,12 @@ const S = {
   year:1479, idx:0, phase:"intro",
   pro_i:0,             // avancement dans le prologue (1474-1478)
 
-  tresor:6, revenu:0, solde:0, detteAnnee:false,
+  tresor:3, revenu:0, solde:0, detteAnnee:false,
 
   /* L'état de 1474, à la mort d'Henri IV. Les cinq décisions du prologue le
      transforment en état de 1479 : ce n'est pas un point de départ fixe, c'est
      le résultat de la manière dont on est sorti de la guerre de Succession. */
-  g:{autorite:34, noblesse:26, prosperite:30, cortes:42, france:34},
+  g:{autorite:34, noblesse:26, clerge:50, prosperite:30, cortes:42, france:34},
 
   gDebut:null,         // les jauges au 1er janvier, pour le bilan de fin d'année
 

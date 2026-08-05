@@ -75,7 +75,8 @@
 .acquis{display:flex;flex-direction:column;gap:13px;margin:4px 0 8px}
 .aq{border-left:2px solid var(--rule);padding-left:14px}
 .aq.bad,.aq.lost{border-left-color:var(--cinnabar)}
-.aq.lost .aq-n,.aq.lost .aq-d{text-decoration:line-through;text-decoration-color:var(--rule)}
+.aq.lost .aq-n{color:var(--cinnabar)}
+.aq.lost .aq-d{color:var(--ink-faint)}
 .aq-n{font-size:18px}
 .aq-y{
   font-family:var(--util);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
@@ -96,7 +97,8 @@
   display:flex;justify-content:space-between;align-items:baseline;gap:20px;
   padding:11px 0;border-bottom:1px solid var(--rule-fine);
 }
-.vp-row.lost .vp-n,.vp-row.lost .vp-d{color:var(--ink-faint)}
+.vp-row.lost .vp-n{color:var(--cinnabar)}
+.vp-row.lost .vp-d{color:var(--ink-faint)}
 .vp-n{font-size:18px}
 .vp-d{font-size:15.5px;color:var(--ink-soft);font-style:italic;margin-top:2px}
 .vp-p{
@@ -284,3 +286,32 @@
 }
 .res-note{display:block;font-size:16px;color:var(--ink-soft);font-style:italic;margin-top:3px}
 .fleche.nul{color:var(--ink-faint)}
+
+
+/* ═══════════ noms propres glosés ═══════════ */
+.lieu{
+  border-bottom:1px dotted var(--rule);cursor:help;
+}
+.lieu:hover{border-bottom-color:var(--cinnabar)}
+
+/* ═══════════ bandeau : boutons icônes ═══════════ */
+.lg-boutons{margin-left:auto;display:flex;gap:7px}
+.lg-ico{
+  width:23px;height:23px;padding:0;cursor:pointer;
+  background:none;border:1px solid var(--rule);color:var(--ink-soft);
+  font-family:var(--util);font-size:12px;line-height:1;
+}
+.lg-ico:hover{border-color:var(--cinnabar);color:var(--cinnabar)}
+.lg-ico:focus-visible{outline:2px solid var(--cinnabar);outline-offset:1px}
+.lg-grp.crise .lg-gn{color:var(--cinnabar)}
+.lg-j.alerte b{color:var(--cinnabar)}
+.lg-j{cursor:help}
+
+/* ═══════════ chiffres décomptés ═══════════ */
+.ef-nb{
+  display:inline-block;min-width:2.4em;text-align:right;margin-left:11px;
+  font-family:var(--util);font-variant-numeric:tabular-nums;font-weight:600;
+}
+.ef-nb.pos{color:var(--p4)} .ef-nb.neg{color:var(--p0)}
+.ef-mot.chg{color:var(--ink-faint)}
+.rien{font-size:16.5px;color:var(--ink-faint);font-style:italic;margin-top:14px}

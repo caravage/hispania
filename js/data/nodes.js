@@ -37,13 +37,13 @@ const NODES = {
 1479:{
   id:"n1479", t:"Deux couronnes, une maison", place:"Barcelone, janvier 1479", art:"ferdinand",
   body:[
-   "Jean II d'Aragon est mort. Ferdinand hérite de l'Aragon, de la Catalogne, de Valence, de la Sicile, des Baléares et de leurs dettes. La double monarchie n'est plus un projet de mariage : c'est un fait, et un problème.",
+   "Jean II d'Aragon est mort. La couronne d'Aragon vous revient avec la Catalogne, Valence, la Sicile, les Baléares et leurs dettes. La double monarchie n'est plus un projet de mariage : c'est un fait, et un problème.",
    "L'Aragon ne se gouverne pas comme la Castille. Rien ne s'y lève sans le vote des Corts, rien ne s'y décide sans les fueros, et le Justicia d'Aragon peut annuler un ordre royal. Au même moment, le traité d'Alcáçovas se négocie avec le Portugal : Juana renoncera, et l'on partagera l'Atlantique.",
-   "La question qui se pose n'est pas de savoir si vous héritez, mais ce que vous en faites."
+   "La question n'est pas de savoir si vous héritez, mais ce que vous en faites : deux couronnes sur une même tête, et deux royaumes qui n'ont pas les mêmes lois."
   ],
   opts:[
    {label:"Union personnelle stricte : chaque royaume garde ses lois, ses Cortès et son trésor.",
-    voie:"historique", port:"admin", base:60, cost:2,
+    voie:"historique", port:"admin", base:60, cost:1,
     note:"La solution réelle. Simple à obtenir, coûteuse à gouverner pendant quarante ans.",
     out:{
       crit:{t:"Les Catalans exigent des garanties si étendues que le roi y perd une partie de ce que son père détenait.", e:{au:-8,t:-3,ch:"On jura les fueros, et l'on jura plus qu'on ne voulait."}},
@@ -53,7 +53,7 @@ const NODES = {
       tri:{t:"L'union est présentée comme une restauration plutôt qu'une conquête. Valence vote un service, ce qu'elle ne faisait plus depuis vingt ans.", e:{au:13,t:9,co:9,flag:"union_personnelle",ch:"On fit d'un héritage une réconciliation."}}
     }},
    {label:"Créer un Conseil des Deux Couronnes, compétent pour la guerre, la diplomatie et les levées communes.",
-    voie:"divergente", port:"admin", base:32, cost:5,
+    voie:"divergente", port:"admin", base:32, cost:3,
     note:"Un organe commun là où l'histoire n'en a jamais créé. Les fueros s'y opposent frontalement.",
     out:{
       crit:{t:"Le Justicia d'Aragon déclare le Conseil contraire aux fueros. La Catalogne parle de reprendre la guerre civile qu'elle vient à peine de finir.", e:{au:-18,co:-16,inject:["crise_catalane"],ch:"On voulut un conseil commun et l'on réveilla une guerre éteinte."}},
@@ -84,7 +84,7 @@ const NODES = {
   ],
   opts:[
    {label:"Voter la Déclaratoire : reprise partielle et graduée des rentes concédées, selon l'ancienneté du service.",
-    voie:"historique", port:"admin", base:48, cost:3,
+    voie:"historique", port:"admin", base:48, cost:2,
     note:"Trente millions de maravédis par an. Chaque grand y perdra quelque chose, aucun ne perdra tout.",
     out:{
       crit:{t:"La gradation est jugée arbitraire. Trois maisons se coalisent, et l'on doit suspendre la mesure sans avoir rien encaissé.", e:{au:-14,no:-12,t:-2,ch:"On voulut ne fâcher personne et l'on fâcha tout le monde."}},
@@ -94,7 +94,7 @@ const NODES = {
       tri:{t:"L'opération est menée avec une telle maîtrise comptable que plusieurs seigneurs restituent volontairement pour ne pas être mis en cause. Le revenu royal est refondé.", e:{t:26,au:17,no:-4,co:12,flag:"declaratoire",flag2:"finances_refondees",ch:"Il se trouva des grands pour rendre d'eux-mêmes, ce qui valut mieux que la contrainte."}}
     }},
    {label:"Renoncer à la reprise et négocier à la place un impôt permanent sur le commerce des laines.",
-    voie:"divergente", port:"cour", base:44, cost:2,
+    voie:"divergente", port:"cour", base:44, cost:1,
     note:"Épargner la noblesse et taxer la Mesta et les marchands. Les villes paieront.",
     out:{
       crit:{t:"Les marchands de Burgos et la Mesta font front. L'impôt est voté puis rendu inapplicable par une nuée d'exemptions.", e:{co:-14,pr:-8,t:-2,ch:"On vota un impôt que personne ne paya."}},
@@ -104,7 +104,7 @@ const NODES = {
       tri:{t:"L'impôt est accepté, indexé et administré par des officiers royaux. La couronne gagne un revenu régulier sans avoir créé un seul ennemi de rang.", e:{t:21,no:18,au:9,flag:"impot_laines",flag2:"fisc_commercial",ch:"On trouva le moyen rare d'enrichir la couronne sans blesser personne d'important."}}
     }},
    {label:"Proposer aux Cortès un contrat : impôt régulier consenti chaque décennie, contre droit de regard sur la dépense.",
-    voie:"inouïe", port:"justice", base:28, cost:4,
+    voie:"inouïe", port:"justice", base:28, cost:2,
     note:"Un budget contrôlé. Aucune monarchie ibérique n'acceptera cela avant très longtemps.",
     out:{
       crit:{t:"Les procureurs, encouragés, réclament aussi le contrôle des nominations. Ce qui devait renforcer la couronne devient une machine à la limiter.", e:{au:-20,co:14,inject:["cortes_exigeantes"],ch:"On ouvrit une porte, et l'on ne put plus la refermer."}},
@@ -125,7 +125,7 @@ const NODES = {
   ],
   opts:[
    {label:"Riposter sur la frontière sans déclarer la guerre : razzias, tours, contre-raids.",
-    voie:"historique", port:"guerre", base:56, cost:3,
+    voie:"historique", port:"guerre", base:56, cost:2,
     note:"Ce que font tous les rois de Castille depuis deux siècles. Prudent, et sans issue.",
     out:{
       crit:{t:"Les contre-raids échouent et Grenade prend deux places de plus. La frontière est plus mauvaise qu'avant Zahara.", e:{au:-12,pr:-6,t:-3,ch:"On répondit à un coup de main par trois, et l'on en reçut cinq."}},
@@ -135,7 +135,7 @@ const NODES = {
       tri:{t:"La frontière militarisée devient rentable : parias, tributs, butin. La guerre s'auto-finance avant même d'avoir commencé.", e:{au:12,t:9,flag:"frontiere_armee",flag2:"frontiere_rentable",ch:"On fit de la frontière une ferme, et elle rapporta."}}
     }},
    {label:"Écouter Ponce de León et tenter Alhama : un coup de main au cœur du royaume grenadin.",
-    voie:"historique", port:"guerre", base:40, cost:4,
+    voie:"historique", port:"guerre", base:40, cost:2,
     note:"Alhama est à quarante lieues derrière les lignes. Si l'on y entre, on ne pourra plus reculer.",
     out:{
       crit:{t:"La colonne est interceptée dans la sierra. Le marquis s'échappe, l'essentiel de sa troupe non, et l'Andalousie apprend qu'elle est sans défense.", e:{guerre:"grenade",au:-17,no:-10,t:-4,pr:-5,ch:"On envoya des hommes derrière les montagnes et ils n'en revinrent pas."}},
@@ -145,7 +145,7 @@ const NODES = {
       tri:{t:"La prise est si nette qu'elle vaut proclamation. Rome accorde la bulle de croisade et l'argent de la chrétienté commence à entrer.", e:{guerre:"grenade",au:18,t:8,no:9,flag:"alhama",inject:["siege_alhama"],flag2:"guerre_grenade",flag3:"bulle_croisade",ch:"Une échelle posée de nuit sur un mur ouvrit dix ans de guerre et vingt ans de gloire."}}
     }},
    {label:"Négocier avec Grenade : restitution de Zahara, tribut, et une trêve longue garantie par écrit.",
-    voie:"inouïe", port:"diplomatie", base:34, cost:2,
+    voie:"inouïe", port:"diplomatie", base:34, cost:1,
     note:"Renoncer à la conquête. Le clergé, la noblesse andalouse et la chrétienté entière vous le reprocheront.",
     out:{
       crit:{t:"Abu al-Hasan refuse avec mépris et publie la lettre. Le roi de Castille a demandé la paix à un roi maure : la cour ne s'en remet pas.", e:{au:-22,no:-14,ch:"On demanda la paix et l'on reçut le mépris, ce qui coûte plus cher qu'une défaite."}},
@@ -166,7 +166,7 @@ const NODES = {
   ],
   opts:[
    {label:"Marcher sur Loja immédiatement, avec ce qu'on a.",
-    voie:"historique", port:"guerre", base:34, cost:7,
+    voie:"historique", port:"guerre", base:34, cost:4,
     note:"C'est ce qui fut fait, et ce fut un désastre.",
     out:{
       crit:{t:"Le camp est mal assis, la cavalerie de Grenade coupe l'eau, et la retraite se change en déroute sous les murs. On y laisse l'artillerie et le grand maître de Calatrava.", e:{au:-16,pr:-10,no:-12,ch:"On alla devant Loja sans les moyens d'un siège, et l'on en revint sans l'artillerie."}},
@@ -176,7 +176,7 @@ const NODES = {
       tri:{t:"Contre toute attente la place capitule : la garnison, sans secours, traite au bout de cinq semaines. La vallée du Genil est ouverte et Alhama cesse d'être une île.", e:{au:14,pr:6,no:9,flag:"loja",ch:"Loja tomba, et la route d'Alhama cessa d'être un chemin de montagne."}}
     }},
    {label:"Différer d'un an et employer l'année à fondre des bombardes.",
-    voie:"divergente", port:"admin", base:52, cost:5,
+    voie:"divergente", port:"admin", base:52, cost:3,
     note:"Les fondeurs sont français et allemands. Il faut les faire venir et les payer.",
     out:{
       crit:{t:"Les fondeurs sont mal payés et repartent. On a perdu la saison et l'argent, et Alhama a failli tomber pendant qu'on attendait.", e:{t:-4,au:-10,pr:-5}},
@@ -186,7 +186,7 @@ const NODES = {
       tri:{t:"Non seulement le train de siège existe, mais on a fondé une fonderie royale à Huéscar avec ses maîtres, ses moules et son école. Aucune place de Grenade ne tiendra plus deux semaines.", e:{au:13,pr:7,co:5,flag:"artillerie_royale",flag2:"fonderie_royale",ch:"On institua une fonderie du roi, et les murailles cessèrent de compter."}}
     }},
    {label:"Renoncer à Loja et acheter la vallée : pensions aux alcaides, tribut à l'émir.",
-    voie:"inouïe", port:"diplomatie", base:38, cost:4,
+    voie:"inouïe", port:"diplomatie", base:38, cost:2,
     note:"Payer les capitaines ennemis plutôt que les combattre. Cela se saura à la cour.",
     out:{
       crit:{t:"L'argent est pris et dénoncé publiquement à Grenade. On a financé la garnison qu'on voulait acheter et l'on passe pour un roi qui n'ose pas se battre.", e:{t:-5,au:-14,no:-10}},
@@ -207,7 +207,7 @@ const NODES = {
   ],
   opts:[
    {label:"Le relâcher contre vassalité, tribut et guerre civile à Grenade.",
-    voie:"historique", port:"diplomatie", base:44, cost:3,
+    voie:"historique", port:"diplomatie", base:44, cost:2,
     note:"Rendre un roi à ses ennemis. C'est ce qui fut fait, et cela dura neuf ans.",
     out:{
       crit:{t:"Boabdil relâché se réconcilie avec son père contre l'envahisseur. On a rendu un roi et uni Grenade.", e:{au:-14,pr:-6,ch:"On rendit l'émir, et il fit la paix avec son père contre nous."}},
@@ -217,7 +217,7 @@ const NODES = {
       tri:{t:"Boabdil tient l'Albaicín contre son père et paie son tribut avec exactitude. Grenade se fait la guerre à elle-même et la Castille arbitre.", e:{au:16,pr:9,t:9,flag:"grenade_divisee",flag2:"grenade_vassale",ch:"L'émir de Grenade devint le vassal de Castille contre son propre père."}}
     }},
    {label:"Le garder en otage et négocier place par place contre sa liberté.",
-    voie:"divergente", port:"justice", base:50, cost:2,
+    voie:"divergente", port:"justice", base:50, cost:1,
     note:"Un roi captif vaut plus qu'un roi vassal — tant qu'on ne le rend pas.",
     out:{
       crit:{t:"Grenade le déclare déchu et se donne un autre émir. On garde un otage sans valeur et l'on a perdu le seul levier qu'on avait.", e:{au:-12,t:-3}},
@@ -227,7 +227,7 @@ const NODES = {
       tri:{t:"On monnaye si bien la captivité que la frontière avance de trente lieues sans qu'une bombarde soit tirée. L'émir finit par préférer la Castille à Grenade.", e:{au:15,pr:10,t:6,flag:"otage_royal",flag2:"frontiere_avancee",ch:"On ne rendit jamais l'émir, et l'on prit son royaume place par place."}}
     }},
    {label:"Reconnaître Boabdil roi de Grenade sous protection castillane, et le réinstaller par les armes.",
-    voie:"inouïe", port:"guerre", base:32, cost:8,
+    voie:"inouïe", port:"guerre", base:32, cost:4,
     note:"Faire de l'émirat un royaume client au lieu de le conquérir. Aucun roi de Castille n'y a pensé.",
     out:{
       crit:{t:"L'armée castillane entre à Grenade pour installer un émir que personne ne veut. Elle en ressort poursuivie, et les deux Grenades s'unissent enfin contre nous.", e:{au:-20,pr:-12,no:-8,t:-6}},
@@ -248,7 +248,7 @@ const NODES = {
   ],
   opts:[
    {label:"Passer outre, garnison à Teruel, tribunal installé de force.",
-    voie:"historique", port:"foi", base:42, cost:5,
+    voie:"historique", port:"foi", base:42, cost:3,
     note:"C'est ce qui fut fait. L'inquisiteur Arbués sera poignardé dans sa cathédrale.",
     out:{
       crit:{t:"L'inquisiteur est assassiné dans la Seo. La répression qui suit vide Saragosse de ses marchands et l'Aragon retient la leçon : le roi force ses fueros quand il veut.", e:{au:6,co:-16,pr:-14,no:-8,ch:"On poignarda l'inquisiteur dans sa propre cathédrale, et l'Aragon paya pour cent ans."}},
@@ -258,7 +258,7 @@ const NODES = {
       tri:{t:"Non seulement le tribunal s'installe, mais le précédent est établi et écrit : sur les matières de foi, la volonté royale prime les fueros. Les juristes en tireront tout le reste.", e:{au:18,co:-9,t:9,flag:"office_commun",flag2:"primaute_royale",ch:"On établit que le roi passait avant le fuero, et l'on ne s'en tint pas à la foi."}}
     }},
    {label:"Négocier : tribunal accepté, confiscations abandonnées, juges aragonais.",
-    voie:"divergente", port:"diplomatie", base:48, cost:3,
+    voie:"divergente", port:"diplomatie", base:48, cost:2,
     note:"Sans les confiscations, le tribunal ne se finance plus lui-même.",
     out:{
       crit:{t:"Les concessions sont prises pour de la faiblesse et les Corts en demandent d'autres. On n'a ni tribunal ni autorité.", e:{au:-12,co:4,t:-3}},
@@ -268,7 +268,7 @@ const NODES = {
       tri:{t:"Le compromis devient une doctrine des rapports entre les couronnes : ce que le roi veut passe par les corps du royaume où il l'applique. L'union se solidifie par le consentement plutôt que par la contrainte.", e:{au:12,co:18,pr:9,flag:"office_negocie",flag2:"union_consentie",ch:"On apprit à gouverner l'Aragon en aragonais, ce qui valut mieux que des garnisons."}}
     }},
    {label:"Suspendre l'extension et borner le tribunal à la Castille par édit.",
-    voie:"inouïe", port:"justice", base:36, cost:2,
+    voie:"inouïe", port:"justice", base:36, cost:1,
     note:"Arrêter volontairement le seul instrument royal qui s'étende tout seul.",
     out:{
       crit:{t:"Rome y voit un désaveu, la Castille une reculade, et les prédicateurs reprennent l'affaire contre la couronne elle-même.", e:{au:-14,co:-6,pr:-6}},
@@ -289,7 +289,7 @@ const NODES = {
   ],
   opts:[
    {label:"Battre la ville au canon, sans assaut.",
-    voie:"historique", port:"guerre", base:46, cost:9,
+    voie:"historique", port:"guerre", base:46, cost:5,
     note:"Quinze jours de bombardement. C'est ce qui fut fait, et Ronda se rendit.",
     out:{
       crit:{t:"Les bombardes éclatent l'une après l'autre, faute de fondeurs. Le siège s'éternise, la peste entre au camp, on lève.", e:{au:-14,pr:-10,t:-6}},
@@ -299,7 +299,7 @@ const NODES = {
       tri:{t:"Ronda et la serranía tombent, et la manière frappe l'Europe : on écrit de Naples et de Bourgogne pour savoir comment la Castille a fait. L'artillerie royale devient une réputation.", e:{au:19,pr:11,no:9,co:6,flag:"ronda",flag2:"artillerie_royale",ch:"L'Europe apprit à Ronda que les murailles avaient cessé de compter."}}
     }},
    {label:"Contourner Ronda et couper Málaga de la frontière.",
-    voie:"divergente", port:"guerre", base:52, cost:6,
+    voie:"divergente", port:"guerre", base:52, cost:3,
     note:"Prendre le pays plutôt que la place. Moins glorieux, moins cher.",
     out:{
       crit:{t:"L'armée s'étire dans la serranía sans base et se fait harceler jusqu'à devoir se retirer par où elle est venue.", e:{au:-12,pr:-8,no:-6}},
@@ -309,7 +309,7 @@ const NODES = {
       tri:{t:"La campagne réussit si bien qu'on établit une ligne de places tenues et payées, qui avance chaque année sans bataille. La guerre devient une administration.", e:{au:14,pr:12,t:7,co:5,flag:"serrania",flag2:"frontiere_avancee",ch:"On cessa de prendre des villes et l'on se mit à prendre le pays."}}
     }},
    {label:"Offrir aux villes de la serranía le statut de mudéjars protégés contre reddition sans siège.",
-    voie:"inouïe", port:"justice", base:40, cost:4,
+    voie:"inouïe", port:"justice", base:40, cost:2,
     note:"Garantir la loi et les biens des vaincus. Le clergé de camp criera à la trahison.",
     out:{
       crit:{t:"La garantie est violée par les hommes d'armes dès la première ville, et plus aucune ne se rendra sans siège pendant six ans.", e:{au:-16,pr:-10,no:-6}},
@@ -340,7 +340,7 @@ const NODES = {
       tri:{t:"On le retient et l'on met discrètement deux pilotes de Palos à vérifier ses routes. Le jour où l'on voudra, tout sera prêt.", e:{au:6,pr:3,flag:"genois_retenu",flag2:"pilotes_palos",ch:"On fit attendre le Génois, mais on prépara ses navires."}}
     }},
    {label:"Accorder les caravelles tout de suite, sur les fonds de la Sainte Hermandad.",
-    voie:"divergente", port:"admin", base:38, cost:6,
+    voie:"divergente", port:"admin", base:38, cost:3,
     note:"En pleine guerre de Grenade. Les Cortès demanderont des comptes.",
     out:{
       crit:{t:"L'expédition ne revient pas. Trois navires, leurs équipages et l'argent de la guerre, perdus pour une erreur de calcul dont on était averti.", e:{t:-8,au:-16,co:-12,ch:"On envoya trois navires vers l'ouest et l'on n'en revit aucun."}},
@@ -350,7 +350,7 @@ const NODES = {
       tri:{t:"Non seulement ils reviennent, mais ils reviennent avec une route, des relais aux Canaries et un contrat qui réserve tout à la couronne. La Castille a six ans d'avance et personne pour la suivre.", e:{au:22,pr:16,t:18,co:12,flag:"decouverte",flag2:"route_ouest",ch:"On trouva les Indes par l'ouest, et l'on prit soin d'en garder le secret un an."}}
     }},
    {label:"Refuser le titre mais acheter le calcul : payer ses cartes et armer des pilotes castillans.",
-    voie:"inouïe", port:"diplomatie", base:44, cost:3,
+    voie:"inouïe", port:"diplomatie", base:44, cost:2,
     note:"L'idée sans l'homme. Il criera au vol dans toute l'Europe.",
     out:{
       crit:{t:"Il refuse, part pour Lisbonne avec ce qu'il sait, et la Castille passe pour une cour qui vole les étrangers.", e:{au:-12,pr:-5,ch:"On voulut l'idée sans l'homme, et l'on perdit les deux."}},
@@ -370,7 +370,7 @@ const NODES = {
   ],
   opts:[
    {label:"Grenade. Toute la force du royaume vers la frontière du sud.",
-    voie:"historique", port:"guerre", base:54, cost:3,
+    voie:"historique", port:"guerre", base:54, cost:2,
     note:"La voie réelle. Dix ans de sièges, une réputation immense, un trésor épuisé.",
     out:{
       crit:{t:"L'effort est décidé sans les moyens. La première campagne se solde par un désastre dans les défilés de la Axarquía.", e:{au:-12,t:-5,flag:"cap_grenade",ch:"On voulut Grenade avant d'en avoir les moyens."}},
@@ -380,7 +380,7 @@ const NODES = {
       tri:{t:"Tout est en place — argent, canons, alliances, et une chrétienté qui regarde. La conquête est déjà à moitié gagnée.", e:{au:16,t:9,no:8,flag:"cap_grenade",ch:"Il ne resta plus qu'à prendre les villes, ce qui était le plus simple."}}
     }},
    {label:"La mer. Ports, chantiers, Canaries, et ce que les Portugais trouvent au sud.",
-    voie:"divergente", port:"diplomatie", base:42, cost:3,
+    voie:"divergente", port:"diplomatie", base:42, cost:2,
     note:"Renoncer au prestige de la croisade pour une puissance qui ne se voit pas encore.",
     out:{
       crit:{t:"L'argent part dans des chantiers qui ne produisent rien et l'Andalousie, privée de guerre, se soulève contre les nouveaux impôts.", e:{au:-14,t:-6,no:-10,flag:"cap_mer",ch:"On construisit des quais pendant que l'on demandait des lances."}},
@@ -390,7 +390,7 @@ const NODES = {
       tri:{t:"Marine, capitaux et cartographes convergent à Séville. Dix ans d'avance sur l'histoire, et personne à la cour ne sait encore ce que cela vaudra.", e:{pr:19,t:12,au:9,flag:"cap_mer",flag2:"ocean_dabord",ch:"On mit tout dans l'océan, sans savoir ce qu'il y avait au bout."}}
     }},
    {label:"L'intérieur. Achever l'administration, les tribunaux, l'université et les comptes avant toute aventure.",
-    voie:"inouïe", port:"admin", base:38, cost:4,
+    voie:"inouïe", port:"admin", base:38, cost:2,
     note:"Aucun souverain de ce siècle n'a choisi de ne rien conquérir pendant dix ans.",
     out:{
       crit:{t:"La noblesse et le clergé, privés de guerre et de butin, s'agitent. On reproche au roi de gouverner comme un notaire.", e:{no:-16,au:-10,ch:"On reprocha au roi de préférer les registres aux batailles."}},

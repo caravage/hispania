@@ -4,7 +4,7 @@ Jeu de gestion textuel. Le royaume est à vous ; reste à savoir ce qu'il devien
 
 L'acte s'ouvre en 1479 : Alcáçovas met fin à la guerre de Succession et Ferdinand hérite de l'Aragon la même année. C'est le moment où les deux souverains sont définitivement en place.
 
-Les cinq années d'avant se règlent en **prologue** : cinq décisions rapides, sans dé et sans coût, qui disent seulement comment on est sorti de la guerre de Succession. Elles annoncent leurs effets — il n'y a rien à cacher là où il n'y a pas de hasard — et composent l'état de 1479. Le point de départ n'est donc pas fixe : c'est le résultat de ces cinq choix.
+Les années d'avant se règlent en **prologue** : trois décisions rapides, sans dé et sans coût, qui disent seulement comment on est sorti de la guerre de Succession. Elles annoncent leurs effets — il n'y a rien à cacher là où il n'y a pas de hasard — et composent l'état de 1479. Le point de départ n'est donc pas fixe : c'est le résultat de ces cinq choix.
 
 Ouvrir `index.html` dans un navigateur. Pas de serveur, pas d'installation, pas d'étape de compilation.
 
@@ -16,12 +16,13 @@ Neuf années, une par tour. Chaque année :
 
 1. **Rentrées** — le trésor s'alimente. Le montant varie.
 2. **Répartition** — six portefeuilles, cinq crans de dotation chacun. Il n'y a jamais de quoi tenir les six.
-3. **Situations** — de deux à cinq. Le nœud historique de l'année, plus une situation par guerre en cours, plus ce que le passé vous renvoie, plus l'ordinaire du royaume. Le jeu vous dit ce qui a chargé l'année.
-4. **Chronique** — ce que l'année laisse par écrit, ce qu'elle a fixé, et le mouvement de chaque jauge sur les douze mois. Les années précédentes sont dans les **archives**, consultables à tout moment.
+3. **Situations** — de deux à cinq. Le nœud historique de l'année, plus une situation par guerre en cours, plus ce que le passé vous renvoie. Le jeu vous dit ce qui a chargé l'année.
+4. **Affaires courantes** — trois à cinq par an, tranchées sans dé : un pont emporté, un ours en cadeau, une éclipse. Effets minces, mais c'est ce qui empêche une année d'être une suite de crises.
+5. **Chronique** — ce que l'année laisse par écrit, ce qu'elle laisse au règne, et le mouvement de chaque jauge sur les douze mois. Les années précédentes sont dans les **archives**, à l'icône du bandeau.
 
 Chaque situation offre plusieurs réponses. Les données les classent en **historique**, **divergente** et **inouïe**, mais **le joueur ne voit jamais ces mots** et l'ordre d'affichage est tiré au sort à chaque partie : rien ne désigne la voie que l'histoire a suivie.
 
-Sous chaque réponse, sans avoir à la sélectionner : le portefeuille et sa dotation, la jauge dont elle dépend et son état, le coût, et l'issue probable avec sa barre. Le détail chiffré se déplie sur la réponse retenue. La glose en italique — ce que l'option engage vraiment — n'apparaît qu'à la résolution, une fois le sort jeté.
+Sous chaque réponse, sans avoir à la sélectionner : le portefeuille et sa dotation, la jauge dont elle dépend et son état, le coût, et la **chance de réussite en pourcentage** avec sa barre. Le détail chiffré se déplie sur la réponse retenue. La glose en italique — ce que l'option engage vraiment — n'apparaît qu'à la résolution, une fois le sort jeté.
 
 La règle qui tient l'uchronie est dans le mot **osé**. « Personne n'a osé » n'est pas « personne n'a imaginé » : une réponse inouïe doit rester une chose qu'un conseiller de 1484 aurait pu formuler devant la reine sans passer pour fou. Une option qu'aucun contemporain n'aurait pu concevoir n'est pas audacieuse, elle est anachronique — et elle n'a pas sa place ici.
 
@@ -51,7 +52,9 @@ js/
     config.js           portefeuilles, crans, jauges, rentes — tout l'équilibrage
     art.js              manifeste des œuvres (noms de fichiers Wikimedia Commons)
     exploits.js         les acquis du règne et ce qu'ils valent au bilan
-    prologue.js         les cinq décisions de 1474-1478, sans dé ni coût
+    prologue.js         les trois décisions de 1474-1476, sans dé ni coût
+    petits.js           l'ordinaire de la cour : affaires tranchées sans dé
+    lieux.js            glossaire des noms propres, affiché en infobulle
     nodes.js            les neuf nœuds historiques, un par année (1479-1487)
     pool.js             événements de tirage, dont l'ordinaire du royaume
     injected.js         conséquences différées, semées par une issue précédente
@@ -131,6 +134,10 @@ Un document de chancellerie lu sur un écran. Fond papier, encre brun-noir, un a
 
 Les **paliers de jauge** ont leur propre échelle, du rouge au vert, désaturée pour tenir sur le papier. Elle ne dit pas qu'un choix est bon ou mauvais : elle dit où en est une jauge, ce que cinq mots seuls rendaient lent à lire.
 
+Les jauges s'affichent en mots dans le bandeau, mais **au chiffre exact dans les résultats** — d'une résolution, d'une affaire courante ou d'une fin d'année — où le nombre se décompte de l'ancienne valeur à la nouvelle. C'est le seul mouvement du jeu avec le jet de dé, et pour la même raison : c'est le moment où l'on apprend quelque chose.
+
+Tout nom propre inscrit dans `data/lieux.js` reçoit une infobulle au survol, une fois par paragraphe. Un nom de place forte ne dit rien à qui ne l'a pas déjà lu.
+
 Les jauges s'affichent en mots, jamais en chiffres. L'incertitude sur son propre pouvoir est historiquement juste et mécaniquement plus tendue. Les chiffres exacts restent disponibles pour le trésor et pour le détail du seuil, que le joueur doit pouvoir vérifier ligne à ligne.
 
 Le seul mouvement du jeu est le jet de dé. C'est le moment de tension ; tout le reste est immobile.
@@ -164,7 +171,7 @@ Le trésor ne peut pas fermer un tour. On paie ce qu'on a, et ce qui manque devi
 
 ## Ce qui manque
 
+- Le clergé ne bouge encore que par les rentes et les seuils : aucune issue du contenu ne pose d'effet `cl:`. La jauge existe et compte, elle attend d'être écrite.
+- Les grands finissent « en armes » dans presque toutes les parties simulées. Soit les malus `no:` sont trop nombreux, soit rien ne les fait remonter assez.
 - Les grands projets à paliers. L'acte I s'en passe ; l'acte II en aura besoin.
-- La mort des souverains et les successions uchroniques. Prévues pour l'acte III, mais la mécanique de tirage annuel devrait être posée dès l'acte II.
-- Davantage d'ordinaire du royaume. 1475 et 1476 n'ont que deux tirages disponibles : une année de guerre y trouve tout juste de quoi se remplir. Le vérificateur le signale.
-- Rome et Les grands ne commandent chacune qu'un seul portefeuille. Un joueur qui les évite ne les sent jamais bouger, alors qu'elles occupent deux places du bandeau. Elles gagneraient à conditionner des situations plutôt que des seuils.
+- La mort des souverains et les successions uchroniques, prévues pour l'acte III.

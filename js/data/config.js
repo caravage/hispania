@@ -1,13 +1,13 @@
 /* config.js — les tables de réglage.
-   Portefeuilles, crans de dotation, jauges. Tout l'équilibrage tient ici ;
-   le contenu narratif est dans nodes.js, pool.js et injected.js. */
+   Portefeuilles, crans de dotation, jauges, rentes. Tout l'équilibrage tient
+   ici ; le contenu narratif est dans nodes.js, pool.js, petits.js, injected.js. */
 
 const STEPS = ["Abandonné","Famélique","Suffisant","Généreux","Fastueux"];
 
-/* Tenir les six portefeuilles à « Suffisant » coûte 24, à « Fastueux » 66.
-   Les rentrées d'une bonne année tournent autour de 30 : il faut choisir
-   trois portefeuilles à soutenir, pas six à arroser. */
-const STEP_COST = [0,2,4,7,11];
+/* Échelle resserrée. Tenir les six portefeuilles à « Suffisant » coûte 12,
+   à « Fastueux » 30. Les rentrées vont de 9 en 1479 à 18 pour un règne bien
+   mené : on ne tient jamais les six, même modestement. */
+const STEP_COST = [0,1,2,3,5];
 const STEP_MOD  = [-14,-7,0,7,13];
 
 const PF = [
@@ -19,52 +19,68 @@ const PF = [
   {k:"admin",     n:"Administration",       d:"Secrétaires, lettrés, archives. Réduit l'incertitude partout ailleurs."}
 ];
 
-/* Les jauges, groupées par ce qu'elles gouvernent. Le trésor n'en fait pas
-   partie : c'est la seule chose que le joueur voit en chiffres, et il se suit
-   à part. Chaque jauge commande le seuil d'un ou deux portefeuilles — aucune
-   n'est décorative. */
+/* Deux groupes permanents, plus un troisième qui n'existe que s'il y a quelque
+   chose dedans. Le trésor se suit à part : c'est un chiffre, pas un état. */
 const GROUPES = [
-  {k:"pouvoir", n:"Le pouvoir"},
-  {k:"pays",    n:"Le pays"},
-  {k:"dehors",  n:"Au-dehors"}
+  {k:"couronne", n:"La couronne"},
+  {k:"ordres",   n:"Les ordres"},
+  {k:"dehors",   n:"Crises et menaces"}
 ];
 
+/* Les clés internes (autorite, cortes) sont restées : elles sont écrites dans
+   les 95 options du contenu. Seuls les noms affichés ont changé. */
 const GAUGES = {
-  autorite:  {n:"Autorité", gr:"pouvoir",
-    w:["contestée","fragile","établie","forte","incontestée"],
-    d:"Ce que vos ordres pèsent là où vous n'êtes pas. Elle commande la justice et les affaires d'Église, et grossit les rentes du domaine."},
-  noblesse:  {n:"Les grands", gr:"pouvoir",
-    w:["en armes","hostiles","méfiants","ralliés","dévoués"],
-    d:"La haute noblesse. Elle ne s'obtient qu'à la Cour, par les offices et les pensions. Une dotation coupée brutalement l'indispose pour longtemps."},
-  prosperite:{n:"Royaume", gr:"pays",
+  prosperite:{n:"Royaume", gr:"couronne",
     w:["ruiné","exsangue","modeste","prospère","florissant"],
-    d:"Récoltes, chemins, foires. C'est lui qui remplit l'alcabala, et c'est lui qui décide si le pays peut porter une guerre."},
-  cortes:    {n:"Cortès", gr:"pays",
-    w:["hostiles","réticentes","attentives","favorables","acquises"],
-    d:"Les villes réunies, qui votent le service. Elles commandent votre administration et une bonne part des rentrées."},
-  france:    {n:"France", gr:"dehors",
+    d:"Récoltes, chemins, foires. Il remplit l'alcabala et décide si le pays peut porter une guerre."},
+  autorite:  {n:"Pouvoir", gr:"couronne",
+    w:["contesté","fragile","établi","fort","incontesté"],
+    d:"Ce que vos ordres pèsent là où vous n'êtes pas. Il commande la justice, et fait rentrer les maestrazgos et les salines."},
+  noblesse:  {n:"Noblesse", gr:"ordres",
+    w:["en armes","hostile","méfiante","ralliée","dévouée"],
+    d:"Les grands. Ils ne s'obtiennent qu'à la Cour, par les offices et les pensions. Une dotation coupée brutalement les indispose pour longtemps."},
+  clerge:    {n:"Clergé", gr:"ordres",
+    w:["en rupture","défiant","correct","acquis","dévoué"],
+    d:"Évêchés, chapitres, ordres mendiants et le Saint-Office. Il commande les affaires d'Église, il tient les tercias et la bulle de croisade, et c'est lui qui décide si un tribunal de la foi vous obéit ou obéit à Rome."},
+  cortes:    {n:"Bourgeoisie", gr:"ordres",
+    w:["hostile","réticente","attentive","favorable","acquise"],
+    d:"Les villes et leurs procureurs aux Cortès. Elles votent le service, commandent votre administration et fournissent une bonne part des rentrées."},
+  /* Troisième groupe : n'apparaît au bandeau que tant que la crise dure.
+     La France y figure toujours — c'est la menace permanente du règne. */
+  france:    {n:"France", gr:"dehors", toujours:true,
     w:["en guerre","menaçante","hostile","froide","apaisée"],
     d:"Louis XI puis sa fille, qui tiennent le Roussillon et convoitent la Navarre. Elle commande vos ambassades. Laissez-la tomber trop bas et elle entrera en Castille."}
 };
 
 const palier = v => Math.max(0,Math.min(4,Math.floor(v/20)));
 const word = (k,v) => GAUGES[k].w[palier(v)];
+const permanentes = () => Object.keys(GAUGES).filter(k=>GAUGES[k].gr!=="dehors");
 
-/* Le portefeuille et la jauge qui répondent l'un de l'autre. Affiché au joueur
-   sous chaque réponse : il doit voir de quoi dépend sa chance avant de choisir. */
+/* Le portefeuille et la jauge qui répondent l'un de l'autre. Chacun des six a
+   la sienne : aucune jauge n'est décorative, aucun portefeuille n'est orphelin. */
 const PORT_JAUGE = {
-  justice:"autorite", foi:"autorite", guerre:"prosperite",
+  justice:"autorite", foi:"clerge", guerre:"prosperite",
   admin:"cortes", cour:"noblesse", diplomatie:"france"
 };
 
-/* Les rentrées, poste par poste. Nommées, parce que le joueur doit comprendre
-   d'où vient son argent et donc ce qu'il abîme quand il abîme une jauge.
-   `part` est la fraction de la jauge qui rentre au trésor. */
+/* Les rentrées, poste par poste, sous leur nom d'époque et avec la jauge qui
+   les nourrit. C'est là que le joueur comprend d'où vient l'argent, et donc ce
+   qu'il casse quand il laisse une jauge tomber. */
 const RENTES = [
-  {k:"alcabala", n:"Alcabalas",      d:"Le dixième sur toute vente. Suit l'état du royaume.",        g:"prosperite", part:0.15},
-  {k:"servicio", n:"Service des Cortès", d:"Ce que les villes consentent à voter.",                  g:"cortes",     part:0.12},
-  {k:"domaine",  n:"Rentes du domaine", d:"Douanes, salines, maîtrises. Rentre si l'on est obéi.",   g:"autorite",   part:0.09},
-  {k:"tercias",  n:"Tercias reales",  d:"Le tiers royal sur la dîme. Ne dépend que du temps.",       g:null,         part:0}
+  {n:"Alcabala",          g:"prosperite", part:0.075,
+   d:"Le dixième perçu sur toute vente dans le royaume."},
+  {n:"Servicio y montazgo", g:"prosperite", part:0.020,
+   d:"Le péage sur les troupeaux de la Mesta aux passages de rivière."},
+  {n:"Servicio de Cortes", g:"cortes", part:0.055,
+   d:"L'aide extraordinaire que les procureurs des villes votent, ou refusent."},
+  {n:"Almojarifazgo",     g:"cortes", part:0.020,
+   d:"Les droits de douane de Séville et des ports d'Andalousie."},
+  {n:"Rentas del maestrazgo", g:"autorite", part:0.025,
+   d:"Le revenu des ordres militaires, qui ne rentre que si le roi les tient."},
+  {n:"Salinas y almadenes", g:"autorite", part:0.020,
+   d:"Le monopole royal du sel et du mercure d'Almadén."},
+  {n:"Tercias reales",    g:"clerge", part:0.030,
+   d:"Les deux neuvièmes de la dîme que Rome laisse à la couronne — encore faut-il que le clergé les verse."}
 ];
 
 const BAND_NAMES = ["Échec grave","Échec","Demi-succès","Succès","Triomphe"];

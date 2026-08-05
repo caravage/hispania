@@ -25,6 +25,14 @@ function bands(T,forme){
 }
 const reussite = w => w[3]+w[4];
 
+/* Ce que le joueur lit : une chance de réussir, pas un seuil. Le seuil reste
+   le calcul interne — il n'a de sens que pour qui connaît la bande. */
+function chance(opt){
+  const {T,rows}=computeThreshold(opt);
+  const w=bands(T,opt.forme);
+  return {pct:Math.round(reussite(w)), w, T, rows};
+}
+
 
 /* Le seuil, et sa justification ligne à ligne. */
 function computeThreshold(opt){
@@ -45,7 +53,7 @@ function computeThreshold(opt){
 
   // Une entreprise qu'on ne peut pas financer se mène quand même, mal.
   const mq=manque(opt);
-  if(mq>0){ const p=-Math.min(20,mq*4); rows.push(["Engagée sans les moyens",p]); T+=p; }
+  if(mq>0){ const p=-Math.min(20,mq*7); rows.push(["Engagée sans les moyens",p]); T+=p; }
 
   return {T:clamp(Math.round(T),3,97), rows};
 }
@@ -64,39 +72,39 @@ function budgetCost(b){ return PF.reduce((s,p)=>s+STEP_COST[b[p.k]],0); }
 /* On peut engager la couronne au-delà de la caisse, une fois. Si la dette
    n'est pas résorbée à la fin de l'année, elle se paie en autorité et en
    crédit — les prêteurs et les capitaines s'en aperçoivent. */
-const DETTE_MAX = 12;
+const DETTE_MAX = 6;
 function detteAutorisee(){ return S.detteAnnee ? 0 : DETTE_MAX; }
 
 function soldeDette(){
   if(S.tresor>=0) return null;
   const d=-S.tresor;
   const eff=[];
-  S.g.autorite=clamp(S.g.autorite-Math.min(10,3+Math.round(d/3)),0,100);
-  S.g.noblesse=clamp(S.g.noblesse-Math.min(8,2+Math.round(d/4)),0,100);
+  S.g.autorite=clamp(S.g.autorite-Math.min(10,3+d),0,100);
+  S.g.noblesse=clamp(S.g.noblesse-Math.min(8,2+d),0,100);
   eff.push(d);
   S.detteAnnee=true;
   return d;
 }
 
 
-/* Les rentrées, poste par poste. Rend le détail pour que l'écran puisse le
-   montrer : le joueur doit savoir d'où vient son argent, donc ce qu'il abîme
-   quand il abîme une jauge. */
+/* Les rentrées, poste par poste, sous leur nom d'époque et avec la jauge qui
+   les nourrit. Le joueur doit pouvoir lire d'où vient son argent, donc ce qu'il
+   casse quand il laisse une jauge tomber. */
 function rentes(){
   const lignes=[];
-  const tercias = 4 + S.idx*0.4;
+  const socle = 2 + S.idx*0.35;
   RENTES.forEach(r=>{
-    const v = r.g ? S.g[r.g]*r.part : tercias;
-    lignes.push({n:r.n, d:r.d, v:Math.round(v)});
+    const v = (r.g ? S.g[r.g]*r.part : 0) + (r.n==="Tercias reales" ? socle : 0);
+    lignes.push({n:r.n, d:r.d, g:r.g, v:Math.round(v)});
   });
   let total=lignes.reduce((s,l)=>s+l.v,0);
 
   const reformes=[];
   // Volontairement modestes : une réforme doit se sentir, pas dispenser de
   // gouverner. Six réformes acquises valent moins qu'une jauge bien tenue.
-  const bonus={declaratoire:3, impot_laines:2, contrat_cortes:2,
-               monnaie_saine:2, consulat_burgos:2, bulle_croisade:2,
-               ordres_couronne:3, greniers_royaux:1};
+  const bonus={declaratoire:2, impot_laines:1, contrat_cortes:1,
+               monnaie_saine:1, consulat_burgos:1, bulle_croisade:1,
+               ordres_couronne:2, greniers_royaux:1};
   Object.keys(bonus).forEach(f=>{ if(S.flags[f]){
     total+=bonus[f]; reformes.push({n:EXPLOITS[f]?EXPLOITS[f].n:f, v:bonus[f]}); }});
 
@@ -121,9 +129,9 @@ function rentrees(){
 /* ---------- les guerres ----------
    Un état qui dure : solde annuelle, situation imposée chaque année, fin datée. */
 const GUERRES = {
-  grenade:{n:"la guerre de Grenade", solde:8, evts:1,
+  grenade:{n:"la guerre de Grenade", solde:4, evts:1,
     d:"La frontière du sud est ouverte et ne se refermera pas seule."},
-  france:{n:"la guerre de France", solde:9, evts:1,
+  france:{n:"la guerre de France", solde:5, evts:1,
     d:"La France a passé les Pyrénées."}
 };
 const nomGuerre = k => GUERRES[k] ? GUERRES[k].n : k;
@@ -142,6 +150,17 @@ function guerresEchues(){
   return finies;
 }
 
+/* Le troisième groupe du bandeau n'existe que tant qu'il a un contenu.
+   La France y figure toujours ; les guerres s'y ajoutent et s'en retirent. */
+function crises(){
+  const out=Object.keys(GAUGES).filter(k=>GAUGES[k].gr==="dehors" && GAUGES[k].toujours)
+    .map(k=>({type:"jauge", k, n:GAUGES[k].n, mot:word(k,S.g[k]), pal:palier(S.g[k])}));
+  enGuerre().forEach(k=>out.push({type:"guerre", k, n:nomGuerre(k),
+    mot:"depuis "+S.guerres[k], pal:0}));
+  if(S.tresor<0) out.push({type:"dette", n:"Dette", mot:(-S.tresor)+" à rendre", pal:0});
+  return out;
+}
+
 const SEUIL_GUERRE_FRANCE = 12;
 function menaceFrance(){
   return !S.guerres.france && !S.paix.france && S.g.france<=SEUIL_GUERRE_FRANCE;
@@ -152,7 +171,8 @@ function menaceFrance(){
    apply() rend une liste d'objets décrivant ce qui a bougé, pas des chaînes :
    l'écran de résolution a besoin de savoir si une jauge a seulement glissé
    (une flèche suffit) ou si elle a changé de palier (il faut le dire). */
-const JAUGE_CLE = {au:"autorite", no:"noblesse", pr:"prosperite", co:"cortes", fr:"france"};
+const JAUGE_CLE = {au:"autorite", no:"noblesse", cl:"clerge",
+                   pr:"prosperite", co:"cortes", fr:"france"};
 
 function apply(e){
   const out=[];

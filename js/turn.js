@@ -8,7 +8,8 @@
      1. le nœud historique de l'année — il tombe toujours ;
      2. la guerre : chaque guerre en cours impose une situation de plus ;
      3. les conséquences semées les années précédentes (S.queue) ;
-     4. l'ordinaire du royaume, tiré dans POOL pour compléter.
+     4. l'ordinaire du royaume, tiré dans POOL pour compléter ;
+     5. trois à cinq affaires courantes de data/petits.js, tranchées sans dé.
 
    Le plancher est de deux situations, le plafond de cinq — au-delà l'année
    cesse d'être lisible. yearNote dit au joueur ce qui a chargé son calendrier. */
@@ -55,6 +56,16 @@ function buildYear(){
     if(e.etat.guerre && !S.guerres[e.etat.guerre] && !S.paix[e.etat.guerre])
       S.guerres[e.etat.guerre]=S.year;
   });
+
+  /* L'ordinaire de la cour, par-dessus. Trois à cinq affaires courantes qui se
+     tranchent sans dé : c'est ce qui empêche une année d'être une suite de
+     crises et donne au règne son bruit de fond. */
+  const petits=PETITS.filter(e=>!S.seen[e.id] && e.years.includes(S.year) && (!e.req||e.req(S)));
+  const nPetits=Math.min(petits.length, 3+Math.floor(Math.random()*3));
+  for(let i=0;i<nPetits;i++){
+    const e=petits.splice(Math.floor(Math.random()*petits.length),1)[0];
+    S.seen[e.id]=true; list.push({...e, petit:true});
+  }
 
   S.year_events=list;
   S.yearNote=causes.join(" ");

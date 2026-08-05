@@ -13,18 +13,18 @@ const fs = require("fs"), vm = require("vm"), path = require("path");
 const R = path.join(__dirname, "..");
 
 const FICHIERS = ["js/data/config.js","js/data/art.js","js/data/exploits.js","js/data/nodes.js",
-                  "js/data/prologue.js","js/data/pool.js","js/data/injected.js","js/state.js","js/rules.js","js/turn.js"];
+                  "js/data/prologue.js","js/data/petits.js","js/data/pool.js","js/data/injected.js","js/state.js","js/rules.js","js/turn.js"];
 
 // `const` en tête de script ne s'attache pas à globalThis : on concatène et on
 // exporte explicitement, comme le fait le navigateur avec des scripts classiques.
 const ctx = vm.createContext({Math, JSON, console, Object, Array, String, Number});
 const src = FICHIERS.map(f => fs.readFileSync(path.join(R, f), "utf8")).join("\n;\n");
 const X = vm.runInContext(src +
-  "\n;({NODES,POOL,INJECTED,ART,EXPLOITS,GUERRES,PF,YEARS,BAND_KEYS,PORT_JAUGE,PROLOGUE,JAUGE_CLE,S,bands,score})",
+  "\n;({NODES,POOL,INJECTED,ART,EXPLOITS,GUERRES,PF,YEARS,BAND_KEYS,PORT_JAUGE,PROLOGUE,PETITS,GAUGES,S,bands,score})",
   ctx, {filename: "bundle.js"});
 
 const err = [], warn = [];
-const EFFETS = ["t","au","co","pr","no","fr","flag","flag2","flag3",
+const EFFETS = ["t","au","co","cl","pr","no","fr","flag","flag2","flag3",
                 "inject","ch","perte","guerre","paix"];
 const VOIES = ["historique","divergente","inouïe"];
 const FORMES = [undefined,"normale","sure","extreme"];
@@ -75,7 +75,37 @@ for (const [ou, e] of tous) {
   });
 }
 
-// Prologue : cinq décisions sèches, une par année de 1474 à 1478.
+// Chaque portefeuille doit avoir sa jauge, et chaque jauge servir à quelque chose.
+Object.values(X.PORT_JAUGE).forEach(g => { if (!X.GAUGES[g]) err.push(`PORT_JAUGE pointe vers la jauge inconnue « ${g} »`); });
+Object.keys(X.GAUGES).forEach(g => {
+  if (X.GAUGES[g].gr === "dehors") return;
+  if (!Object.values(X.PORT_JAUGE).includes(g)) warn.push(`la jauge « ${g} » ne commande aucun portefeuille`);
+  if (!X.GAUGES[g].w || X.GAUGES[g].w.length !== 5) err.push(`la jauge « ${g} » n'a pas cinq mots`);
+});
+
+// Les petits événements : résolus sans dé, effets minces.
+X.PETITS.forEach((e, i) => {
+  const w = `petit ${e.id || i}`;
+  if (!e.id || !e.t || !e.place || !e.body) err.push(`${w} : champ manquant`);
+  if (!Array.isArray(e.years) || !e.years.length) err.push(`${w} : years manquant`);
+  (e.years || []).forEach(y => { if (!X.YEARS.includes(y)) err.push(`${w} : année ${y} hors acte`); });
+  if (!Array.isArray(e.opts) || e.opts.length < 2 || e.opts.length > 3)
+    err.push(`${w} : il faut deux ou trois réponses, pas ${(e.opts||[]).length}`);
+  (e.opts || []).forEach((o, j) => {
+    if (!o.label || !o.txt) err.push(`${w} opt[${j}] : label ou résultat manquant`);
+    Object.keys(o.e || {}).forEach(k => {
+      if (!EFFETS.includes(k)) err.push(`${w} opt[${j}] : effet inconnu « ${k} »`);
+      if (typeof (o.e||{})[k] === "number" && Math.abs(o.e[k]) > 3)
+        err.push(`${w} opt[${j}] : effet « ${k} » de ${o.e[k]} — les petits événements doivent rester négligeables`);
+    });
+  });
+});
+X.YEARS.forEach(y => {
+  const n = X.PETITS.filter(e => e.years.includes(y)).length;
+  if (n < 5) warn.push(`${y} : seulement ${n} petit(s) événement(s) — il en faut 3 à 5 par année`);
+});
+
+// Prologue : trois décisions sèches, avant 1479.
 X.PROLOGUE.forEach((p, i) => {
   const w = `prologue[${i}] ${p.y}`;
   if (!p.t || !p.body || !p.place) err.push(`${w} : titre, lieu ou corps manquant`);
@@ -91,9 +121,7 @@ X.PROLOGUE.forEach((p, i) => {
   });
 });
 const anneesPro = X.PROLOGUE.map(p => p.y);
-[1474,1475,1476,1477,1478].forEach(y => {
-  if (!anneesPro.includes(y)) warn.push(`le prologue ne couvre pas ${y}`);
-});
+if (X.PROLOGUE.length !== 3) warn.push(`le prologue compte ${X.PROLOGUE.length} décisions au lieu de trois`);
 anneesPro.forEach(y => { if (X.YEARS.includes(y)) err.push(`prologue ${y} : cette année est aussi jouée`); });
 
 // Années
