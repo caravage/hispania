@@ -204,17 +204,28 @@ function sBudget(){
   }).join("");
 
   const d=S.detailRentes||{lignes:[],reformes:[]};
+  /* Le compte de l'année, en entier : d'où vient chaque maravédi, ce que la
+     guerre prélève, ce que chaque portefeuille coûte, et ce qui reste. Le
+     joueur doit pouvoir suivre la colonne du haut jusqu'en bas. */
+  const prov = g => g ? GAUGES[g].n : "—";
   app().innerHTML=`
   <div style="padding-top:40px"></div>
   <div class="eyebrow">Année ${S.year} · Répartition</div>
   <h2>La bourse de l'année</h2>
 
-  <details class="rentes"><summary>Rentrées de l'année : ${S.revenu}${S.solde?` · solde des guerres : −${S.solde}`:""}</summary>
-    <table>${d.lignes.map(l=>`<tr><td>${l.n}</td><td>${l.v}</td></tr>`).join("")}
-    ${d.reformes.map(r=>`<tr><td>${r.n}</td><td>+${r.v}</td></tr>`).join("")}
-    ${enGuerre().map(k=>`<tr class="neg"><td>${nomGuerre(k).replace(/^la /,"")}</td><td>−${GUERRES[k].solde}</td></tr>`).join("")}
+  <details class="rentes" open><summary>Le compte de l'année</summary>
+    <table>
+      <tr class="sec"><td colspan="2">Rentrées</td><td>${S.revenu}</td></tr>
+      ${d.lignes.map(l=>`<tr><td>${glose(l.n)}</td><td class="prov">${prov(l.g)}</td><td>${l.v}</td></tr>`).join("")}
+      ${d.reformes.map(r=>`<tr><td>${r.n}</td><td class="prov">réforme acquise</td><td>+${r.v}</td></tr>`).join("")}
+      ${S.solde?`<tr class="sec neg"><td colspan="2">Soldes de guerre</td><td>−${S.solde}</td></tr>
+      ${enGuerre().map(k=>`<tr class="neg"><td>${nomGuerre(k).replace(/^la /,"")}</td><td class="prov">solde et vivres</td><td>−${GUERRES[k].solde}</td></tr>`).join("")}`:""}
+      <tr class="sec"><td colspan="2">En caisse avant répartition</td><td>${S.tresor}</td></tr>
+      <tr class="sec neg"><td colspan="2">Dotations</td><td>−${spent}</td></tr>
+      ${PF.filter(p=>STEP_COST[S.budget[p.k]]>0).map(p=>
+        `<tr class="neg"><td>${p.n}</td><td class="prov">${STEPS[S.budget[p.k]]}</td><td>−${STEP_COST[S.budget[p.k]]}</td></tr>`).join("")}
+      <tr class="tot"><td colspan="2">Reste pour les affaires de l'année</td><td>${reste}</td></tr>
     </table></details>
-
   <div class="purse">
     <span>À répartir</span>
     <span class="big ${reste<0?"dette":""}">${reste}</span>
