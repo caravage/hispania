@@ -45,14 +45,17 @@ function bands(T,forme){
   if(forme==="extreme") return [F*.55, F*.30, F*.15+S*.20, S*.35, S*.45];
   return [F*.25, F*.55, F*.20+S*.25, S*.60, S*.15];
 }
-const reussite = w => w[3]+w[4];
+const reussite = w => w[3]+w[4];        // succès et triomphe
+const aboutit  = w => w[2]+w[3]+w[4];   // + demi-succès : l'entreprise aboutit
 
-/* Ce que le joueur lit : une chance de réussir, pas un seuil. Le seuil reste
-   le calcul interne — il n'a de sens que pour qui connaît la bande. */
+/* Ce que le joueur lit : une chance d'aboutir, pas un seuil. Le demi-succès y
+   est compté — une affaire à moitié réussie n'est pas une affaire ratée — mais
+   la part pleinement réussie est donnée à part, parce que ce n'est pas pareil. */
 function chance(opt){
   const {T,rows}=computeThreshold(opt);
   const w=bands(T,opt.forme);
-  return {pct:Math.round(reussite(w)), w, T, rows};
+  return {pct:Math.round(aboutit(w)), plein:Math.round(reussite(w)),
+          demi:Math.round(w[2]), w, T, rows};
 }
 
 
@@ -120,6 +123,14 @@ function soldeDette(){
    bilan de fin d'année. */
 function entretenirOrdres(){
   const out=[];
+  const c=centralisation();
+  if(c.d!==0){
+    const av=S.g.autorite;
+    S.g.autorite=clamp(av+c.d,0,100);
+    if(S.g.autorite!==av) out.push({g:"autorite", n:GAUGES.autorite.n,
+      pf: c.d>0?"L'appareil l'emporte sur les ordres":"Les ordres l'emportent sur l'appareil",
+      cran:`${c.couronne} contre ${c.ordres}`, d:c.d, av, ap:S.g.autorite});
+  }
   Object.keys(PF_ENTRETIEN).forEach(pk=>{
     const g=PF_ENTRETIEN[pk], d=derive(S.budget[pk]);
     if(!d) return;
@@ -136,17 +147,16 @@ function entretenirOrdres(){
    casse quand il laisse une jauge tomber. */
 function rentes(){
   const lignes=[];
-  const socle = 2 + S.idx*0.35;
   RENTES.forEach(r=>{
-    if(r.guerre && !enGuerre().length) return;   // la croisade suppose une croisade
-    const v = (r.g ? S.g[r.g]*r.part : 0) + (r.n==="Tercias reales" ? socle : 0);
-    lignes.push({n:r.n, d:r.d, g:r.g, v:Math.round(v)});
+    let part=r.part;
+    if(r.g==="clerge" && enGuerre().length) part+=RENTE_CROISADE;
+    lignes.push({g:r.g, n:GAUGES[r.g].n, v:Math.round(S.g[r.g]*part),
+      croisade: r.g==="clerge" && enGuerre().length>0});
   });
+  lignes.push({g:null, n:"Ordinaire du domaine", v:Math.round(renteFixe(S.idx))});
   let total=lignes.reduce((s,l)=>s+l.v,0);
 
   const reformes=[];
-  // Volontairement modestes : une réforme doit se sentir, pas dispenser de
-  // gouverner. Six réformes acquises valent moins qu'une jauge bien tenue.
   const bonus={declaratoire:2, impot_laines:1, contrat_cortes:1,
                monnaie_saine:1, consulat_burgos:1, bulle_croisade:1,
                ordres_couronne:2, greniers_royaux:1};
@@ -156,6 +166,18 @@ function rentes(){
   const alea = .9 + Math.random()*.2;
   total = Math.max(4, Math.round(total*alea));
   return {total, lignes, reformes};
+}
+
+/* ---------- centralisation ----------
+   Ce qu'on donne à ses propres organes contre ce qu'on donne aux ordres. Un
+   budget qui penche vers les ordres achète leur fidélité et laisse le pouvoir
+   chez eux ; un budget qui penche vers l'appareil le ramène à la couronne. */
+const totalBloc = b => PF.filter(p=>p.bloc===b).reduce((s,p)=>s+STEP_COST[S.budget[p.k]],0);
+function centralisation(){
+  const couronne=totalBloc("couronne"), ordres=totalBloc("ordres");
+  return {couronne, ordres,
+    d: clamp(Math.round((couronne-ordres)/CENTRALISATION_DIVISEUR),
+             -CENTRALISATION_MAX, CENTRALISATION_MAX)};
 }
 
 function rentrees(){

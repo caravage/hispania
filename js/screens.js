@@ -34,10 +34,11 @@ function ledger(){
     const js=Object.keys(GAUGES).filter(k=>GAUGES[k].gr===gr.k);
     // La stabilité n'est pas une sixième jauge : c'est la moyenne des ordres,
     // affichée là où on la lit — au bout de la ligne des ordres.
+    const st=stabilite();
     const stab = gr.k==="ordres"
-      ? `<span class="lg-j stab" title="La moyenne des trois ordres. Elle pèse sur toutes vos entreprises, et si elle tombe trop bas le royaume produit lui-même les troubles qu'il faudra traiter."><span class="lg-jn">Stabilité</span> <b class="p${palier(stabilite())}">${motStabilite()}</b></span>` : "";
+      ? `<span class="lg-j stab" title="La moyenne des trois ordres. Elle pèse sur toutes vos entreprises, et si elle tombe trop bas le royaume produit lui-même les troubles qu'il faudra traiter."><span class="lg-jn">Stabilité</span><span class="jauge"><span class="jauge-fill p${palier(st)}" style="width:${st}%"></span></span><b class="p${palier(st)}">${motStabilite()}</b></span>` : "";
     return `<div class="lg-grp"><span class="lg-gn">${gr.n}</span>${js.map(k=>
-      `<span class="lg-j" title="${GAUGES[k].n} — ${GAUGES[k].d.replace(/"/g,"&quot;")}"><span class="lg-jn">${GAUGES[k].n}</span> <b class="p${palier(S.g[k])}">${word(k,S.g[k])}</b></span>`).join("")}${stab}</div>`;
+      jaugeHTML(k)).join("")}${stab}</div>`;
   }).join("");
 
   // Le troisième groupe n'apparaît que s'il a un contenu.
@@ -63,6 +64,16 @@ function ledger(){
   if(a) a.onclick=()=>{ legendeOuverte=!legendeOuverte; ledger(); };
   const ar=document.getElementById("arch");
   if(ar) ar.onclick=()=>{ if(S.phase!=="archives"){S.retour=S.phase;S.phase="archives";render();} };
+}
+
+/* Une jauge se lit à deux niveaux : le mot pour la nuance, la barre pour le
+   coup d'œil. La barre porte la couleur du palier. */
+function jaugeHTML(k){
+  const v=S.g[k], p=palier(v);
+  return `<span class="lg-j" title="${GAUGES[k].n} — ${GAUGES[k].d.replace(/"/g,"&quot;")}">
+    <span class="lg-jn">${GAUGES[k].n}</span>
+    <span class="jauge"><span class="jauge-fill p${p}" style="width:${v}%"></span></span>
+    <b class="p${p}">${word(k,v)}</b></span>`;
 }
 
 function legendeHTML(){
@@ -196,20 +207,35 @@ function sBudget(){
   const dispo=Math.max(0,S.tresor)+detteAutorisee();
   const trop=spent>dispo;
 
-  const rows=PF.map(p=>{
-    const lv=S.budget[p.k];
-    const j=PORT_JAUGE[p.k];
+  const ligneHTML=p=>{
+    const lv=S.budget[p.k], j=PORT_JAUGE[p.k];
     let warn="";
     if(S.lastBudget && S.lastBudget[p.k]-lv>=2) warn=`<div class="warn">Coupe brutale : soldes impayées, clientèles déçues.</div>`;
     return `<div class="pf">
       <div class="pf-head"><span class="pf-name">${p.n}</span><span class="pf-cost">${STEP_COST[lv]}</span></div>
       <div class="pf-desc">${p.d}
         <span class="pf-j">Dépend de <b class="p${palier(S.g[j])}">${GAUGES[j].n}</b>${
-          PF_ENTRETIEN[p.k]?` · <b class="${DERIVE[lv]>0?"pos":DERIVE[lv]<0?"neg":""}">${DERIVE[lv]>0?"+":""}${DERIVE[lv]||"±0"}</b> par an`:""}</span></div>
-      <div class="steps">${STEPS.map((s,i)=>
-        `<button class="step" data-k="${p.k}" data-i="${i}" aria-pressed="${i===lv}">${s}</button>`).join("")}</div>
+          PF_ENTRETIEN[p.k]?` · <b class="${derive(lv)>0?"pos":derive(lv)<0?"neg":""}">${derive(lv)>0?"+":""}${derive(lv)}</b> par an`:""}</span></div>
+      <div class="steps">${STEPS.map((st,i)=>
+        `<button class="step" data-k="${p.k}" data-i="${i}" aria-pressed="${i===lv}">${st}</button>`).join("")}</div>
       ${warn}</div>`;
-  }).join("");
+  };
+
+  const c=centralisation();
+  const rows=BLOCS.map(b=>{
+    const tot=totalBloc(b.k);
+    return `<div class="bloc ${b.k}">
+      <div class="bloc-head"><span class="bloc-n">${b.n}</span><span class="bloc-t">${tot}</span></div>
+      <div class="bloc-d">${b.d}</div>
+      ${PF.filter(p=>p.bloc===b.k).map(ligneHTML).join("")}
+    </div>`;
+  }).join("") + `
+    <div class="centralisation ${c.d>0?"vers-roi":c.d<0?"vers-ordres":""}">
+      <span>${c.couronne} à l'appareil · ${c.ordres} aux ordres</span>
+      <span>${c.d===0?"Le pouvoir ne bouge pas."
+        : c.d>0?`Le pouvoir se concentre — <b>Pouvoir +${c.d}</b> à la fin de l'année.`
+              :`Le pouvoir se disperse — <b>Pouvoir ${c.d}</b> à la fin de l'année.`}</span>
+    </div>`;
 
   const d=S.detailRentes||{lignes:[],reformes:[]};
   /* Le compte de l'année, en entier : d'où vient chaque maravédi, ce que la
@@ -223,18 +249,18 @@ function sBudget(){
 
   <details class="rentes" open><summary>Le compte de l'année</summary>
     <table>
-      <tr class="sec"><td colspan="2">Rentrées</td><td>${S.revenu}</td></tr>
-      ${d.lignes.map(l=>`<tr><td>${glose(l.n)}</td><td class="prov">${prov(l.g)}</td><td>${l.v}</td></tr>`).join("")}
-      ${d.reformes.map(r=>`<tr><td>${r.n}</td><td class="prov">réforme acquise</td><td>+${r.v}</td></tr>`).join("")}
-      ${enGuerre().length?`<tr class="sec neg"><td colspan="2">Soldes de guerre</td><td>−${S.solde}</td></tr>
-      ${enGuerre().map(k=>`<tr class="neg"><td>${nomGuerre(k).replace(/^la /,"")}</td><td class="prov">solde et vivres</td><td>−${GUERRES[k].solde}</td></tr>`).join("")}
-      ${allegementHueste()?`<tr><td>La hueste sert à ses frais</td><td class="prov">Noblesse</td><td>+${allegementHueste()}</td></tr>`:""}`:""}
-      <tr class="sec"><td colspan="2">En caisse avant répartition</td><td>${S.tresor}</td></tr>
-      <tr class="sec neg"><td colspan="2">Dotations</td><td>−${spent}</td></tr>
-      ${PF.filter(p=>STEP_COST[S.budget[p.k]]>0).map(p=>
-        `<tr class="neg"><td>${p.n}</td><td class="prov">${STEPS[S.budget[p.k]]}</td><td>−${STEP_COST[S.budget[p.k]]}</td></tr>`).join("")}
-      <tr class="tot"><td colspan="2">Reste pour les affaires de l'année</td><td>${reste}</td></tr>
+      <tr class="sec"><td>Ce que le royaume a versé</td><td>${S.revenu}</td></tr>
+      ${d.lignes.map(l=>`<tr><td>${l.n}${l.croisade?` <span class="prov">croisade comprise</span>`:""}</td><td>+${l.v}</td></tr>`).join("")}
+      ${d.reformes.map(r=>`<tr><td>${r.n} <span class="prov">réforme</span></td><td>+${r.v}</td></tr>`).join("")}
+      ${enGuerre().length?`
+      <tr class="sec neg"><td>Guerres</td><td>−${S.solde}</td></tr>
+      ${enGuerre().map(k=>`<tr class="neg"><td>${nomGuerre(k).replace(/^la /,"")}</td><td>−${GUERRES[k].solde}</td></tr>`).join("")}
+      ${allegementHueste()?`<tr><td>La hueste sert à ses frais <span class="prov">Noblesse</span></td><td>+${allegementHueste()}</td></tr>`:""}`:""}
+      <tr class="sec"><td>En caisse</td><td>${S.tresor}</td></tr>
+      <tr class="sec neg"><td>Dotations</td><td>−${spent}</td></tr>
+      <tr class="tot"><td>Reste pour les affaires de l'année</td><td>${reste}</td></tr>
     </table></details>
+
   <div class="purse">
     <span>À répartir</span>
     <span class="big ${reste<0?"dette":""}">${reste}</span>
@@ -267,7 +293,7 @@ function sBudget(){
    nu : la jauge dont dépend l'option, son état, et une barre pleine à hauteur
    de la réussite. Le détail chiffré reste dépliable pour qui veut vérifier. */
 function chanceHTML(o,choisie){
-  const {pct,rows}=chance(o);
+  const {pct,plein,demi,rows}=chance(o);
   const j=PORT_JAUGE[o.port];
   const mq=manque(o);
   const cran=pct<15?0:pct<30?1:pct<48?2:pct<66?3:4;
@@ -278,12 +304,17 @@ function chanceHTML(o,choisie){
         <span class="ch-tag">${GAUGES[j].n} <b class="p${palier(S.g[j])}">${word(j,S.g[j])}</b></span>
         ${o.cost?`<span class="ch-tag ${mq?"manque":""}">${o.cost} du trésor${mq?` · il en manque ${mq}`:""}</span>`:`<span class="ch-tag">sans frais</span>`}
       </div>
-      <div class="ch-bar"><div class="ch-fill p${cran}" style="width:${pct}%"></div></div>
-      <div class="ch-mot">Chance de réussite <b class="p${cran}">${pct} %</b>
+      <div class="ch-bar">
+        <div class="ch-fill p${cran}" style="width:${plein}%"></div>
+        <div class="ch-fill demi p${cran}" style="width:${demi}%"></div>
+      </div>
+      <div class="ch-mot"><b class="p${cran}">${pct} %</b> d'aboutir<span class="ch-plein">dont ${plein} % pleinement</span>
         ${choisie?`<span class="ch-detail" data-d="1">le détail</span>`:""}</div>
       <div class="ch-rows" hidden><table>${rows.map(x=>
         `<tr><td>${x[0]}</td><td>${x[1]>0?"+":""}${x[1]}</td></tr>`).join("")}
-        <tr><td><b>Chance de réussir</b></td><td><b>${pct} %</b></td></tr></table></div>
+        <tr><td><b>L'entreprise aboutit</b></td><td><b>${pct} %</b></td></tr>
+        <tr><td>dont pleinement réussie</td><td>${plein} %</td></tr>
+        <tr><td>dont à moitié</td><td>${demi} %</td></tr></table></div>
     </div>`;
 }
 

@@ -17,13 +17,19 @@ const STEP_MOD  = [-14,-7,0,7,13];
    même chose et il n'y a aucune raison de faire retenir deux mots au joueur.
    Les trois autres sont des moyens et non des ordres : on n'investit pas dans
    la noblesse comme on investit dans l'artillerie. */
+/* `bloc` range les lignes en deux ensembles à l'écran : d'abord l'appareil de
+   la couronne, puis les trois ordres côte à côte, avec leur total. */
 const PF = [
-  {k:"cour",      n:"La Noblesse",    d:"Offices, pensions, commanderies. Ce qui achète la fidélité des grands."},
-  {k:"foi",       n:"Le Clergé",      d:"Fondations, évêchés, tribunaux du Saint-Office."},
-  {k:"admin",     n:"La Bourgeoisie", d:"Chartes urbaines, secrétaires, lettrés, archives."},
-  {k:"justice",   n:"Justice & Ordre",d:"Hermandad, corregidores, audiences. Tout ce qui touche à l'obéissance intérieure."},
-  {k:"guerre",    n:"Guerre & Frontière", d:"Hueste, artillerie, places fortes, soldes."},
-  {k:"diplomatie",n:"Ambassades",     d:"Envoyés, dots, cérémonial. Ce qui tient la France à distance."}
+  {k:"justice",   bloc:"couronne", n:"Justice & Ordre", d:"Hermandad, corregidores, audiences. Tout ce qui touche à l'obéissance intérieure."},
+  {k:"guerre",    bloc:"couronne", n:"Guerre & Frontière", d:"Hueste, artillerie, places fortes, soldes."},
+  {k:"diplomatie",bloc:"couronne", n:"Ambassades", d:"Envoyés, dots, cérémonial. Ce qui tient la France à distance."},
+  {k:"cour",      bloc:"ordres",   n:"La Noblesse", d:"Offices, pensions, commanderies."},
+  {k:"foi",       bloc:"ordres",   n:"Le Clergé", d:"Fondations, évêchés, tribunaux du Saint-Office."},
+  {k:"admin",     bloc:"ordres",   n:"La Bourgeoisie", d:"Chartes urbaines, secrétaires, lettrés, archives."}
+];
+const BLOCS = [
+  {k:"couronne", n:"L'appareil de la couronne", d:"Ce que la couronne se donne à elle-même. Le bâtir centralise le pouvoir."},
+  {k:"ordres",   n:"Les trois ordres", d:"Ce qu'on donne aux grands, à l'Église et aux villes. Le donner achète leur fidélité et disperse le pouvoir."}
 ];
 
 /* Deux groupes permanents, plus un troisième qui n'existe que s'il y a quelque
@@ -119,27 +125,31 @@ const ABANDON = -4;
 const derive = lvl => lvl===0 ? ABANDON : STEP_COST[lvl]*ENTRETIEN_PAR_MARAVEDI;
 const DERIVE = STEPS.map((_,i)=>derive(i));   // [-4, +2, +4, +6, +10]
 
-/* Les rentrées, poste par poste, sous leur nom d'époque et avec la jauge qui
-   les nourrit. C'est là que le joueur comprend d'où vient l'argent, et donc ce
-   qu'il casse quand il laisse une jauge tomber. */
+/* D'où vient l'argent, et c'est tout : chaque jauge verse une part d'elle-même
+   au trésor, une fois l'an. Les noms d'époque (alcabala, almojarifazgo…)
+   étaient décoratifs et n'apparaissaient nulle part ailleurs dans le jeu ; ce
+   qui compte est de voir que laisser tomber la Bourgeoisie coûte cinq par an. */
 const RENTES = [
-  {n:"Alcabala",          g:"prosperite", part:0.075,
-   d:"Le dixième perçu sur toute vente dans le royaume."},
-  {n:"Servicio y montazgo", g:"prosperite", part:0.020,
-   d:"Le péage sur les troupeaux de la Mesta aux passages de rivière."},
-  {n:"Servicio de Cortes", g:"cortes", part:0.055,
-   d:"L'aide extraordinaire que les procureurs des villes votent, ou refusent."},
-  {n:"Almojarifazgo",     g:"cortes", part:0.020,
-   d:"Les droits de douane de Séville et des ports d'Andalousie."},
-  {n:"Rentas del maestrazgo", g:"autorite", part:0.025,
-   d:"Le revenu des ordres militaires, qui ne rentre que si le roi les tient."},
-  {n:"Salinas y almadenes", g:"autorite", part:0.020,
-   d:"Le monopole royal du sel et du mercure d'Almadén."},
-  {n:"Bula de cruzada",   g:"clerge", part:0.055, guerre:true,
-   d:"L'impôt de croisade que Rome autorise à lever — tant que la guerre se fait contre l'infidèle."},
-  {n:"Tercias reales",    g:"clerge", part:0.030,
-   d:"Les deux neuvièmes de la dîme que Rome laisse à la couronne — encore faut-il que le clergé les verse."}
+  {g:"prosperite", part:0.095},
+  {g:"cortes",     part:0.075},
+  {g:"autorite",   part:0.045},
+  {g:"clerge",     part:0.030}
 ];
+/* La croisade : le clergé verse davantage tant qu'on fait la guerre. */
+const RENTE_CROISADE = 0.055;
+/* Ce qui rentre sans dépendre de personne, et qui croît lentement. */
+const renteFixe = idx => 2 + idx*0.35;
+
+/* ---------- centralisation ----------
+   Ce qu'on donne à ses propres organes — justice, armée, ambassades — bâtit
+   l'appareil royal. Ce qu'on donne aux ordres achète leur fidélité mais laisse
+   le pouvoir chez eux. La différence des deux fait monter ou descendre le
+   Pouvoir chaque année : c'est le seul endroit du jeu où la forme du budget
+   compte autant que son montant. */
+const LIGNES_COURONNE = ["justice","guerre","diplomatie"];
+const LIGNES_ORDRES   = ["cour","foi","admin"];
+const CENTRALISATION_DIVISEUR = 3;
+const CENTRALISATION_MAX = 5;
 
 const BAND_NAMES = ["Échec grave","Échec","Demi-succès","Succès","Triomphe"];
 const BAND_KEYS  = ["crit","fail","part","succ","tri"];
