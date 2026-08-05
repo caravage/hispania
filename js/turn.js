@@ -25,6 +25,14 @@ function buildYear(){
 
   const guerres=enGuerre();
   let cible = 2 + guerres.length;
+
+  /* Un royaume instable fabrique ses propres affaires. En dessous du seuil,
+     l'année porte une situation de plus : ce sont les trois ordres qui la
+     produisent, et c'est à eux qu'il faudra revenir pour la faire cesser. */
+  if(stabilite()<SEUIL_TROUBLES){
+    cible++;
+    causes.push("Le royaume ne tient qu'à moitié : les ordres sont "+motStabilite()+".");
+  }
   if(guerres.length) causes.push(guerres.length>1
     ? "Le royaume est engagé sur "+guerres.length+" fronts."
     : "Le royaume est engagé dans "+nomGuerre(guerres[0])+".");

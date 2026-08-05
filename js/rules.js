@@ -12,6 +12,19 @@
 
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 
+/* La stabilité : ce que valent ensemble les trois ordres du royaume. Aucun
+   d'eux ne gouverne seul, mais leur moyenne dit si le pays tient. Elle pèse
+   sur toutes les entreprises et, quand elle tombe assez bas, elle produit
+   elle-même les troubles qu'il faudra traiter. */
+function stabilite(){
+  return Math.round((S.g.noblesse + S.g.clerge + S.g.cortes)/3);
+}
+// Même échelle que les trois ordres, au féminin : la stabilité est ce qu'ils
+// valent ensemble, pas une mesure d'une autre nature.
+const MOTS_STABILITE = motsOrdre("f");
+const motStabilite = () => MOTS_STABILITE[palier(stabilite())];
+const SEUIL_TROUBLES = 30;
+
 
 /* La bande de résolution. Cinq largeurs qui totalisent 100.
    `forme` appartient à l'option, pas au joueur : certaines entreprises sont
@@ -48,8 +61,13 @@ function computeThreshold(opt){
   if(adm!==0 && opt.port!=="admin"){ rows.push(["Secrétaires et archives",adm]); T+=adm; }
 
   const key=PORT_JAUGE[opt.port];
-  const gm=Math.round((S.g[key]-50)/5);
+  // Amplitude portée à ±14 : à ±10, la jauge ne pesait quasiment rien face à
+  // la dotation, et croiser les dépendances n'aurait pas été senti.
+  const gm=Math.round((S.g[key]-50)/3.5);
   if(gm!==0){ rows.push([GAUGES[key].n+" — "+word(key,S.g[key]),gm]); T+=gm; }
+
+  const st=Math.round((stabilite()-50)/6);
+  if(st!==0){ rows.push(["Le royaume — "+motStabilite(),st]); T+=st; }
 
   // Une entreprise qu'on ne peut pas financer se mène quand même, mal.
   const mq=manque(opt);
@@ -87,6 +105,23 @@ function soldeDette(){
 }
 
 
+/* L'entretien annuel des ordres : chacun dérive vers ce que sa dotation lui
+   consacre. Appliqué au passage d'une année à l'autre, après la répartition
+   de l'année écoulée — on récolte ce qu'on a payé. Rend le détail pour le
+   bilan de fin d'année. */
+function entretenirOrdres(){
+  const out=[];
+  Object.keys(PF_ENTRETIEN).forEach(pk=>{
+    const g=PF_ENTRETIEN[pk], d=derive(S.budget[pk]);
+    if(!d) return;
+    const av=S.g[g];
+    S.g[g]=clamp(av+d,0,100);
+    if(S.g[g]!==av) out.push({g, n:GAUGES[g].n, pf:PF.find(p=>p.k===pk).n,
+      cran:STEPS[S.budget[pk]], d, av, ap:S.g[g]});
+  });
+  return out;
+}
+
 /* Les rentrées, poste par poste, sous leur nom d'époque et avec la jauge qui
    les nourrit. Le joueur doit pouvoir lire d'où vient son argent, donc ce qu'il
    casse quand il laisse une jauge tomber. */
@@ -94,6 +129,7 @@ function rentes(){
   const lignes=[];
   const socle = 2 + S.idx*0.35;
   RENTES.forEach(r=>{
+    if(r.guerre && !enGuerre().length) return;   // la croisade suppose une croisade
     const v = (r.g ? S.g[r.g]*r.part : 0) + (r.n==="Tercias reales" ? socle : 0);
     lignes.push({n:r.n, d:r.d, g:r.g, v:Math.round(v)});
   });
@@ -115,6 +151,7 @@ function rentes(){
 
 function rentrees(){
   const finies=guerresEchues();
+  S.entretien=entretenirOrdres();
   const r=rentes();
   S.revenu=r.total; S.detailRentes=r;
   S.solde=soldeGuerres();
@@ -136,8 +173,16 @@ const GUERRES = {
 };
 const nomGuerre = k => GUERRES[k] ? GUERRES[k].n : k;
 const enGuerre = () => Object.keys(S.guerres);
+/* La hueste sert à ses frais quand la noblesse est acquise : jusqu'à deux
+   cinquièmes de la solde en moins. C'est le seul rendement direct de la Cour,
+   et il tombe précisément quand la guerre coûte. */
 function soldeGuerres(){
-  return enGuerre().reduce((s,k)=>s+(GUERRES[k]?GUERRES[k].solde:0),0);
+  const brut=enGuerre().reduce((s,k)=>s+(GUERRES[k]?GUERRES[k].solde:0),0);
+  return Math.max(0, Math.round(brut*(1 - S.g.noblesse/ALLEGEMENT_HUESTE)));
+}
+function allegementHueste(){
+  const brut=enGuerre().reduce((s,k)=>s+(GUERRES[k]?GUERRES[k].solde:0),0);
+  return brut - soldeGuerres();
 }
 function guerresEchues(){
   const finies=[];

@@ -332,3 +332,7 @@
   color:var(--ink);border-top:1px solid var(--ink);border-bottom:0;padding-top:11px;font-weight:600;
 }
 .rentes td:first-child{padding-right:14px}
+.lg-j.stab{border-left:1px solid var(--rule);padding-left:13px;margin-left:4px}
+.lg-j.stab .lg-jn{color:var(--ink)}
+.ef.stab-ligne{border-top:1px solid var(--rule);border-bottom:0;margin-top:4px}
+.ef.stab-ligne>span:first-child{color:var(--ink)}

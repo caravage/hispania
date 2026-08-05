@@ -32,8 +32,12 @@ function ledger(){
 
   const groupes=GROUPES.filter(gr=>gr.k!=="dehors").map(gr=>{
     const js=Object.keys(GAUGES).filter(k=>GAUGES[k].gr===gr.k);
+    // La stabilité n'est pas une sixième jauge : c'est la moyenne des ordres,
+    // affichée là où on la lit — au bout de la ligne des ordres.
+    const stab = gr.k==="ordres"
+      ? `<span class="lg-j stab" title="La moyenne des trois ordres. Elle pèse sur toutes vos entreprises, et si elle tombe trop bas le royaume produit lui-même les troubles qu'il faudra traiter."><span class="lg-jn">Stabilité</span> <b class="p${palier(stabilite())}">${motStabilite()}</b></span>` : "";
     return `<div class="lg-grp"><span class="lg-gn">${gr.n}</span>${js.map(k=>
-      `<span class="lg-j" title="${GAUGES[k].n} — ${GAUGES[k].d.replace(/"/g,"&quot;")}"><span class="lg-jn">${GAUGES[k].n}</span> <b class="p${palier(S.g[k])}">${word(k,S.g[k])}</b></span>`).join("")}</div>`;
+      `<span class="lg-j" title="${GAUGES[k].n} — ${GAUGES[k].d.replace(/"/g,"&quot;")}"><span class="lg-jn">${GAUGES[k].n}</span> <b class="p${palier(S.g[k])}">${word(k,S.g[k])}</b></span>`).join("")}${stab}</div>`;
   }).join("");
 
   // Le troisième groupe n'apparaît que s'il a un contenu.
@@ -63,6 +67,8 @@ function ledger(){
 
 function legendeHTML(){
   return `<div class="lg-legende">
+    <div class="gl"><div class="gl-n">Stabilité</div><div class="gl-d">La moyenne de la Noblesse, du Clergé et de la Bourgeoisie. Aucun des trois ne gouverne seul, mais ensemble ils disent si le pays tient. Elle pèse sur toutes vos entreprises ; sous « instable », le royaume produit chaque année une affaire de plus qu'il faudra traiter.</div>
+      <div class="gl-w">${MOTS_STABILITE.map((m,i)=>`<span class="p${i}">${m}</span>`).join(" · ")}</div></div>
     <div class="gl"><div class="gl-n">Trésor</div><div class="gl-d">Le seul chiffre du jeu. Il rentre une fois l'an, avant la répartition. On peut l'engager au-delà de la caisse une fois : la dette non résorbée à la fin de l'année se paie en autorité et en crédit.</div></div>
     ${Object.keys(GAUGES).map(k=>`<div class="gl"><div class="gl-n">${GAUGES[k].n}</div>
       <div class="gl-d">${GAUGES[k].d}</div>
@@ -197,7 +203,9 @@ function sBudget(){
     if(S.lastBudget && S.lastBudget[p.k]-lv>=2) warn=`<div class="warn">Coupe brutale : soldes impayées, clientèles déçues.</div>`;
     return `<div class="pf">
       <div class="pf-head"><span class="pf-name">${p.n}</span><span class="pf-cost">${STEP_COST[lv]}</span></div>
-      <div class="pf-desc">${p.d} <span class="pf-j">Dépend de <b class="p${palier(S.g[j])}">${GAUGES[j].n}</b></span></div>
+      <div class="pf-desc">${p.d}
+        <span class="pf-j">Dépend de <b class="p${palier(S.g[j])}">${GAUGES[j].n}</b>${
+          PF_ENTRETIEN[p.k]?` · <b class="${DERIVE[lv]>0?"pos":DERIVE[lv]<0?"neg":""}">${DERIVE[lv]>0?"+":""}${DERIVE[lv]||"±0"}</b> par an`:""}</span></div>
       <div class="steps">${STEPS.map((s,i)=>
         `<button class="step" data-k="${p.k}" data-i="${i}" aria-pressed="${i===lv}">${s}</button>`).join("")}</div>
       ${warn}</div>`;
@@ -218,8 +226,9 @@ function sBudget(){
       <tr class="sec"><td colspan="2">Rentrées</td><td>${S.revenu}</td></tr>
       ${d.lignes.map(l=>`<tr><td>${glose(l.n)}</td><td class="prov">${prov(l.g)}</td><td>${l.v}</td></tr>`).join("")}
       ${d.reformes.map(r=>`<tr><td>${r.n}</td><td class="prov">réforme acquise</td><td>+${r.v}</td></tr>`).join("")}
-      ${S.solde?`<tr class="sec neg"><td colspan="2">Soldes de guerre</td><td>−${S.solde}</td></tr>
-      ${enGuerre().map(k=>`<tr class="neg"><td>${nomGuerre(k).replace(/^la /,"")}</td><td class="prov">solde et vivres</td><td>−${GUERRES[k].solde}</td></tr>`).join("")}`:""}
+      ${enGuerre().length?`<tr class="sec neg"><td colspan="2">Soldes de guerre</td><td>−${S.solde}</td></tr>
+      ${enGuerre().map(k=>`<tr class="neg"><td>${nomGuerre(k).replace(/^la /,"")}</td><td class="prov">solde et vivres</td><td>−${GUERRES[k].solde}</td></tr>`).join("")}
+      ${allegementHueste()?`<tr><td>La hueste sert à ses frais</td><td class="prov">Noblesse</td><td>+${allegementHueste()}</td></tr>`:""}`:""}
       <tr class="sec"><td colspan="2">En caisse avant répartition</td><td>${S.tresor}</td></tr>
       <tr class="sec neg"><td colspan="2">Dotations</td><td>−${spent}</td></tr>
       ${PF.filter(p=>STEP_COST[S.budget[p.k]]>0).map(p=>
@@ -461,7 +470,9 @@ function bilanAnneeHTML(){
   return `
     <div class="rule"></div>
     <div class="eyebrow">Le royaume au 31 décembre</div>
-    <div class="effects">${lignes}</div>`;
+    <div class="effects">${lignes}
+      <div class="ef stab-ligne"><span>Stabilité</span><span><b class="p${palier(stabilite())}">${motStabilite()}</b>
+        <b class="ef-nb" data-de="${stabilite()}" data-a="${stabilite()}">${stabilite()}</b></span></div></div>`;
 }
 
 function sChron(){

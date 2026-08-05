@@ -20,7 +20,7 @@ const FICHIERS = ["js/data/config.js","js/data/art.js","js/data/exploits.js","js
 const ctx = vm.createContext({Math, JSON, console, Object, Array, String, Number});
 const src = FICHIERS.map(f => fs.readFileSync(path.join(R, f), "utf8")).join("\n;\n");
 const X = vm.runInContext(src +
-  "\n;({NODES,POOL,INJECTED,ART,EXPLOITS,GUERRES,PF,YEARS,BAND_KEYS,PORT_JAUGE,PROLOGUE,PETITS,GAUGES,S,bands,score})",
+  "\n;({NODES,POOL,INJECTED,ART,EXPLOITS,GUERRES,PF,YEARS,BAND_KEYS,PORT_JAUGE,PROLOGUE,PETITS,GAUGES,RENTES,JAUGE_CLE,stabilite,S,bands,score})",
   ctx, {filename: "bundle.js"});
 
 const err = [], warn = [];
@@ -79,8 +79,32 @@ for (const [ou, e] of tous) {
 Object.values(X.PORT_JAUGE).forEach(g => { if (!X.GAUGES[g]) err.push(`PORT_JAUGE pointe vers la jauge inconnue « ${g} »`); });
 Object.keys(X.GAUGES).forEach(g => {
   if (X.GAUGES[g].gr === "dehors") return;
-  if (!Object.values(X.PORT_JAUGE).includes(g)) warn.push(`la jauge « ${g} » ne commande aucun portefeuille`);
+  /* Une jauge doit servir à quelque chose, mais pas forcément à conditionner
+     un portefeuille : la noblesse allège la solde de guerre, le clergé lève la
+     croisade, et les trois ordres font la stabilité. */
+  const commande = Object.values(X.PORT_JAUGE).includes(g);
+  const rapporte = X.RENTES.some(r => r.g === g);
+  const ordre = X.GAUGES[g].gr === "ordres";
+  if (!commande && !rapporte && !ordre) warn.push(`la jauge « ${g} » ne sert à rien : ni seuil, ni rente, ni stabilité`);
   if (!X.GAUGES[g].w || X.GAUGES[g].w.length !== 5) err.push(`la jauge « ${g} » n'a pas cinq mots`);
+});
+
+/* L'invariant du couplage : un portefeuille ne doit pas nourrir en premier
+   lieu la jauge qui conditionne sa réussite. Cinq boucles de ce genre
+   laissaient les grands « en armes » dans toutes les parties simulées ; le jour
+   où l'on écrira des effets de clergé, c'est ici qu'on verra la boucle
+   réapparaître. */
+X.PF.forEach(p => {
+  const gate = X.PORT_JAUGE[p.k];
+  const mouv = {};
+  tous.forEach(([, e]) => (e.opts || []).filter(o => o.port === p.k).forEach(o =>
+    X.BAND_KEYS.forEach(k => {
+      const eff = (o.out[k] || {}).e || {};
+      Object.keys(X.JAUGE_CLE).forEach(c => { if (eff[c]) mouv[X.JAUGE_CLE[c]] = (mouv[X.JAUGE_CLE[c]] || 0) + eff[c]; });
+    })));
+  const classe = Object.entries(mouv).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
+  if (classe.length && classe[0][0] === gate)
+    err.push(`« ${p.n} » est conditionné par ${gate} et c'est la jauge que ses issues font le plus bouger — boucle de rétroaction`);
 });
 
 // Les petits événements : résolus sans dé, effets minces.

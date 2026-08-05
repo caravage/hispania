@@ -158,14 +158,33 @@ Les branches uchroniques n'ont volontairement aucune image. Plus le règne s'éc
 
 Tout est dans `data/config.js` et dans quelques fonctions de `rules.js`.
 
-- `STEP_COST` / `STEP_MOD` — ce que coûte un cran de dotation, ce qu'il vaut au seuil. Tenir les six portefeuilles à « Suffisant » coûte 24 ; les rentrées vont de 19 en 1479 à 36 pour un règne bien mené en 1487. Il faut choisir trois portefeuilles à soutenir, jamais six à arroser.
-- `RENTES` — les postes de recette, nommés et montrés au joueur : alcabalas sur l'état du royaume, service des Cortès, rentes du domaine sur l'autorité, tercias sur le seul temps. Abîmer une jauge se voit sur la ligne correspondante l'année suivante.
-- `bands()` — la forme du risque. `forme` appartient à l'option, pas au joueur. Les cinq largeurs totalisent toujours 100.
-- `DETTE_MAX` — ce qu'on peut engager au-delà de la caisse, une fois. La dette non résorbée à la fin de l'année se paie en autorité et en crédit.
-- `GUERRES` — solde annuelle et situations imposées par chaque guerre.
-- `data/exploits.js` — le seul pourvoyeur de points. Il n'y a pas de points de conduite courante : jouer ne rapporte rien, réussir quelque chose de notable rapporte.
+### Le couplage budget ↔ jauges
 
-Le trésor ne peut pas fermer un tour. On paie ce qu'on a, et ce qui manque devient une pénalité de seuil — « engagée sans les moyens ». Être à sec ne rend donc jamais les décisions gratuites : c'est l'inverse, et c'est ce qui rend une réserve utile.
+C'est la pièce centrale. Trois règles :
+
+**Une ligne de budget ne conditionne jamais la jauge qu'elle entretient.** Chaque portefeuille était autrefois adossé à la jauge que ses propres réussites alimentaient : payer la Cour servait à gagner la Noblesse, mais il fallait déjà la Noblesse pour que payer la Cour marche. Cinq boucles de rétroaction positive — d'où la noblesse « en armes » dans toutes les parties simulées. `PORT_JAUGE` croise désormais les dépendances : ce qui conditionne une dépense est ce qui la rend crédible, pas ce qu'elle achète. Le vérificateur refuse toute réapparition de boucle.
+
+**L'argent dépensé fait monter la jauge en valeur absolue** (`ENTRETIEN_PAR_MARAVEDI`), deux points par maravédi et par an, contre −4 pour une ligne abandonnée. C'est ce qui permet de compenser ce que les situations retirent, et donc de relever un ordre effondré. Sans cela, un ordre généreusement payé s'effondrait quand même.
+
+**Chaque ordre rend une chose différente**, et c'est là qu'est la stratégie :
+
+| Ordre | Ce qu'il rend |
+|---|---|
+| Noblesse | La hueste sert à ses frais : jusqu'à deux cinquièmes de la solde de guerre en moins |
+| Bourgeoisie | Le servicio de Cortes et l'almojarifazgo — de l'argent ordinaire |
+| Clergé | Les tercias, et la bulle de croisade qui ne rentre que tant qu'on fait la guerre |
+
+Et leur moyenne fait la **stabilité**, qui pèse sur toutes les entreprises et qui, sous « hostile », fait produire au royaume une affaire de plus chaque année.
+
+### Le reste
+
+- `STEP_COST` / `STEP_MOD` — tenir les six lignes à « Suffisant » coûte 12 quand 1479 rapporte 9.
+- `RENTES` — les postes de recette sous leur nom d'époque, avec l'ordre qui les fournit. Le compte de l'année descend jusqu'au bout : rentrées, soldes, dotations, reste.
+- `bands()` — la forme du risque. `forme` appartient à l'option, pas au joueur.
+- `DETTE_MAX` — ce qu'on peut engager au-delà de la caisse. La dette non résorbée se paie en autorité et en crédit.
+- `data/exploits.js` — le seul pourvoyeur de points.
+
+Le trésor ne peut pas fermer un tour. On paie ce qu'on a, et ce qui manque devient une pénalité de seuil — « engagée sans les moyens ».
 
 ---
 

@@ -17,6 +17,7 @@ const S = {
      le résultat de la manière dont on est sorti de la guerre de Succession. */
   g:{autorite:34, noblesse:26, clerge:50, prosperite:30, cortes:42, france:34},
 
+  entretien:[],       // ce que les dotations ont entretenu cette année
   gDebut:null,         // les jauges au 1er janvier, pour le bilan de fin d'année
 
   budget:{justice:1,guerre:2,foi:1,diplomatie:1,cour:2,admin:1},
