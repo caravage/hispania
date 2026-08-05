@@ -11,7 +11,7 @@
    Structure d'une option
    ──────────────────────
    { label  : le texte du bouton
-     voie   : "historique" | "divergente" | "hérétique"
+     voie   : "historique" | "divergente" | "inouïe"
      port   : portefeuille dont la dotation modifie le seuil
      base   : difficulté nue, avant tout modificateur
      cost   : coût en trésor, multiplié ensuite par la manière choisie
@@ -63,7 +63,7 @@ const NODES = {
       tri:{t:"Le geste passe pour de la sagesse conjugale. Ferdinand, obligé, se montre plus généreux qu'exigeant, et l'Aragon paie une partie de la campagne.", e:{au:8,t:4,dv:4,flag:"primaute_aragon",ch:"Le roi, ayant tout obtenu, se crut tenu de payer."}}
     }},
    {label:"Convoquer immédiatement les Cortès pour faire déclarer la succession par les royaumes eux-mêmes.",
-    voie:"hérétique", port:"justice", base:38, cost:3,
+    voie:"inouïe", port:"justice", base:38, cost:3,
     note:"Fonder le titre sur le consentement plutôt que sur l'hérédité. Personne n'a jamais fait cela.",
     out:{
       crit:{t:"L'assemblée devient une tribune. On y discute publiquement de la légitimité d'Isabelle, de celle de Juana, et de ce que vaut un roi que l'on peut choisir.", e:{au:-18,no:-10,dv:8,ch:"On demanda aux royaumes de nommer leur reine ; les royaumes s'aperçurent qu'ils le pouvaient."}},
@@ -77,6 +77,7 @@ const NODES = {
 
 1475:{
   id:"n1475", t:"Le Portugal entre en Castille", place:"Plasencia, mai 1475",
+  etat:{guerre:"portugal"},   // Afonso a franchi la frontière : ce n'est pas un choix
   body:[
    "Afonso V de Portugal a épousé Juana, sa nièce de treize ans, et se proclame roi de Castille en son nom. Il franchit la frontière avec quinze mille hommes. Les Pacheco, les Stúñiga, l'archevêque de Tolède Carrillo — celui-là même qui fit le mariage d'Isabelle — passent de son côté.",
    "Le trésor ne peut pas payer trois mois de campagne. Les villes, elles, ont de l'argent et une hostilité ancienne envers les grands seigneurs qui soutiennent le Portugal."
@@ -103,7 +104,7 @@ const NODES = {
       tri:{t:"L'alliance des villes et de la couronne devient l'ossature du règne. Les grands comprennent qu'ils ne sont plus indispensables.", e:{t:12,co:15,au:12,no:-8,dv:6,flag:"villes_armees",ch:"On découvrit cette année-là que la couronne pouvait se passer de la noblesse."}}
     }},
    {label:"Ouvrir une négociation secrète avec Juana : lui offrir un apanage et la reconnaissance de sa naissance.",
-    voie:"hérétique", port:"diplomatie", base:30, cost:2,
+    voie:"inouïe", port:"diplomatie", base:30, cost:2,
     note:"Reconnaître l'adversaire pour désarmer sa cause. Politiquement explosif.",
     out:{
       crit:{t:"La lettre est interceptée et lue à Lisbonne. Reconnaître Juana, c'est admettre qu'Isabelle a usurpé. Deux villes changent de camp.", e:{au:-20,no:-10,dv:9,ch:"Une lettre égarée valut à l'ennemi plus qu'une bataille."}},
@@ -129,8 +130,8 @@ const NODES = {
       crit:{t:"Les villes refusent la charge, l'institution naît sans moyens et devient une source de plaintes plutôt qu'un instrument.", e:{co:-10,au:-6,ch:"On créa une milice sans argent, ce qui fit deux mécontentements au lieu d'un."}},
       fail:{t:"L'Hermandad existe sur le papier. Sur les chemins, rien ne change encore.", e:{t:-2,ch:"L'ordonnance fut lue partout et appliquée nulle part."}},
       part:{t:"Les quadrilles se mettent en place lentement. Les chemins se dégagent dans la Vieille-Castille, pas ailleurs.", e:{au:6,pr:4,co:-3,flag:"hermandad",ch:"Les chemins du nord redevinrent praticables."}},
-      succ:{t:"L'Hermandad tient. Les bandes se dispersent, le commerce reprend, et la couronne dispose pour la première fois d'une force qu'elle n'a pas eu à mendier.", e:{au:11,pr:8,t:3,no:-4,flag:"hermandad",ch:"Pour la première fois depuis vingt ans, on voyagea sans escorte."}},
-      tri:{t:"L'institution dépasse son objet : les quadrilles servent d'armée d'appoint, de police et de collecteurs. Les grands comprennent ce qu'on vient de leur retirer.", e:{au:15,pr:10,t:6,no:-7,flag:"hermandad",flag2:"hermandad_forte",ch:"On avait voulu une police ; on obtint une armée qui ne devait rien aux seigneurs."}}
+      succ:{t:"L'Hermandad tient. Les bandes se dispersent, le commerce reprend, et la couronne dispose pour la première fois d'une force qu'elle n'a pas eu à mendier.", e:{paix:"portugal",au:11,pr:8,t:3,no:-4,flag:"hermandad",ch:"Pour la première fois depuis vingt ans, on voyagea sans escorte."}},
+      tri:{t:"L'institution dépasse son objet : les quadrilles servent d'armée d'appoint, de police et de collecteurs. Les grands comprennent ce qu'on vient de leur retirer.", e:{paix:"portugal",au:15,pr:10,t:6,no:-7,flag:"hermandad",flag2:"hermandad_forte",ch:"On avait voulu une police ; on obtint une armée qui ne devait rien aux seigneurs."}}
     }},
    {label:"Confier la pacification aux grands seigneurs eux-mêmes, contre confirmation de leurs domaines.",
     voie:"divergente", port:"cour", base:60, cost:2,
@@ -139,18 +140,18 @@ const NODES = {
       crit:{t:"Chacun pacifie chez le voisin. Trois guerres privées éclatent sous couvert de service royal.", e:{au:-12,pr:-8,no:4,dv:3,inject:["guerre_privee"],ch:"On chargea les loups de garder les chemins."}},
       fail:{t:"Les seigneurs encaissent la confirmation et pacifient peu.", e:{au:-6,no:6,dv:3,ch:"On paya d'avance un service qui ne vint pas."}},
       part:{t:"L'ordre revient dans les grands domaines. Ailleurs, il ne revient pas, et la couronne a renoncé à ses reprises.", e:{au:2,no:12,pr:3,dv:4,flag:"grands_confirmes",ch:"L'ordre régna là où il y avait un maître, et nulle part ailleurs."}},
-      succ:{t:"La haute noblesse, rassurée sur ses biens, se rallie franchement et met ses lances au service de la guerre portugaise.", e:{no:18,au:5,t:4,dv:5,flag:"grands_confirmes",ch:"Les grands, une fois rassurés, servirent bien."}},
-      tri:{t:"Le ralliement est complet et gratuit. Mais la couronne vient de renoncer, pour une génération, à récupérer les domaines aliénés sous Henri IV.", e:{no:22,au:8,t:7,dv:6,flag:"grands_confirmes",ch:"On acheta la paix des grands au prix du patrimoine royal."}}
+      succ:{t:"La haute noblesse, rassurée sur ses biens, se rallie franchement et met ses lances au service de la guerre portugaise.", e:{paix:"portugal",no:18,au:5,t:4,dv:5,flag:"grands_confirmes",ch:"Les grands, une fois rassurés, servirent bien."}},
+      tri:{t:"Le ralliement est complet et gratuit. Mais la couronne vient de renoncer, pour une génération, à récupérer les domaines aliénés sous Henri IV.", e:{paix:"portugal",no:22,au:8,t:7,dv:6,flag:"grands_confirmes",ch:"On acheta la paix des grands au prix du patrimoine royal."}}
     }},
    {label:"Abolir la juridiction seigneuriale sur les chemins royaux et y substituer des juges nommés par la couronne.",
-    voie:"hérétique", port:"justice", base:34, cost:4,
+    voie:"inouïe", port:"justice", base:34, cost:4,
     note:"Une réforme judiciaire qui ne sera tentée qu'un siècle plus tard, et jamais aussi tôt.",
     out:{
       crit:{t:"La noblesse y voit une déclaration de guerre en pleine guerre. Deux maisons majeures passent au Portugal.", e:{no:-22,au:-12,dv:9,inject:["defection_noble"],ch:"On voulut prendre la justice aux seigneurs pendant qu'on avait besoin de leurs lances."}},
       fail:{t:"Les juges sont nommés et ne peuvent nulle part siéger. L'ordonnance devient une humiliation.", e:{au:-9,no:-10,dv:6,ch:"Les juges du roi trouvèrent les portes fermées."}},
       part:{t:"Le principe est posé et appliqué sur quelques routes du nord. C'est peu, mais c'est un précédent écrit.", e:{au:7,no:-9,pr:3,dv:7,flag:"chemins_royaux",ch:"On établit un principe que l'on ne put encore appliquer."}},
-      succ:{t:"Les chemins royaux passent effectivement sous juridiction de la couronne. Le commerce intérieur s'en ressent aussitôt.", e:{au:14,pr:9,co:8,no:-11,dv:8,flag:"chemins_royaux",ch:"Le roi devint juge sur ses propres routes, ce qu'aucun de ses prédécesseurs n'avait osé."}},
-      tri:{t:"La mesure réussit si bien que les villes en réclament l'extension à leurs territoires. Un modèle administratif naît trente ans avant son heure.", e:{au:19,pr:12,co:13,no:-12,dv:10,flag:"chemins_royaux",flag2:"justice_royale",ch:"Ce qui avait été conçu comme une mesure de guerre devint la charpente du royaume."}}
+      succ:{t:"Les chemins royaux passent effectivement sous juridiction de la couronne. Le commerce intérieur s'en ressent aussitôt.", e:{paix:"portugal",au:14,pr:9,co:8,no:-11,dv:8,flag:"chemins_royaux",ch:"Le roi devint juge sur ses propres routes, ce qu'aucun de ses prédécesseurs n'avait osé."}},
+      tri:{t:"La mesure réussit si bien que les villes en réclament l'extension à leurs territoires. Un modèle administratif naît trente ans avant son heure.", e:{paix:"portugal",au:19,pr:12,co:13,no:-12,dv:10,flag:"chemins_royaux",flag2:"justice_royale",ch:"Ce qui avait été conçu comme une mesure de guerre devint la charpente du royaume."}}
     }}
   ]
 },
@@ -183,7 +184,7 @@ const NODES = {
       tri:{t:"Le procédé fait école. Plusieurs seigneurs offrent spontanément leurs places fortes contre des offices à la cour — un échange que la couronne saura répéter.", e:{au:13,pr:11,no:15,dv:6,flag:"echange_tours",ch:"Les seigneurs découvrirent qu'un office à la cour valait mieux qu'une tour en province."}}
     }},
    {label:"Convoquer les deux maisons rivales et leur imposer un arbitrage écrit, exécutoire, publié.",
-    voie:"hérétique", port:"admin", base:36, cost:3,
+    voie:"inouïe", port:"admin", base:36, cost:3,
     note:"Substituer un acte de chancellerie à un rapport de force. Rien n'y oblige les parties.",
     out:{
       crit:{t:"Les deux refusent de comparaître. L'autorité royale est publiquement défiée par écrit, ce qui est pire qu'en silence.", e:{au:-16,no:-8,dv:7,ch:"On les convoqua par acte public ; leur absence fut publique aussi."}},
@@ -224,7 +225,7 @@ const NODES = {
       tri:{t:"Le rapport épiscopal, prudent et documenté, devient la doctrine officielle : on jugera les faits, pas les origines. Séville prospère.", e:{pr:16,t:6,au:6,dv:9,flag:"bulle_reserve",flag2:"doctrine_faits",ch:"On décida de juger ce que les gens faisaient plutôt que ce qu'ils étaient."}}
     }},
    {label:"Refuser la bulle et publier une garantie royale de protection pour les convertis.",
-    voie:"hérétique", port:"foi", base:26, cost:3,
+    voie:"inouïe", port:"foi", base:26, cost:3,
     note:"Rome, les dominicains et une partie de la cour contre vous. Le commerce et le crédit avec vous.",
     out:{
       crit:{t:"Rome parle de désobéissance, une partie du clergé castillan se détache ouvertement, et le refus est retourné contre la dynastie comme une preuve d'hérésie.", e:{ro:-24,au:-16,dv:12,inject:["schisme_clerc"],ch:"On avait voulu protéger des sujets ; on se retrouva accusé avec eux."}},
@@ -265,7 +266,7 @@ const NODES = {
       tri:{t:"Le Conseil obtient jusqu'à une compétence fiscale limitée. Ce qui naît là ne ressemble plus à une union personnelle mais à un État.", e:{au:20,t:10,co:8,dv:14,flag:"conseil_deux",flag2:"etat_commun",ch:"Ce ne fut plus un roi portant deux couronnes, mais un royaume en portant deux noms."}}
     }},
    {label:"Faire financer l'effort commun par l'Aragon en invoquant l'héritage, avant que les Corts ne s'organisent.",
-    voie:"hérétique", port:"diplomatie", base:30, cost:1,
+    voie:"inouïe", port:"diplomatie", base:30, cost:1,
     note:"Un précédent fiscal vaudrait plus que dix victoires. S'il échoue, la Catalogne s'embrase.",
     out:{
       crit:{t:"Les Corts de Barcelone dénoncent une violation des fueros. Le roi est contraint de jurer publiquement qu'il ne recommencera pas.", e:{au:-20,co:-14,dv:9,inject:["crise_catalane"],ch:"On demanda de l'argent avant d'avoir juré les libertés, et l'on jura deux fois plus fort ensuite."}},
@@ -306,7 +307,7 @@ const NODES = {
       tri:{t:"L'impôt est accepté, indexé et administré par des officiers royaux. La couronne gagne un revenu régulier sans avoir créé un seul ennemi de rang.", e:{t:21,no:18,au:9,dv:9,flag:"impot_laines",flag2:"fisc_commercial",ch:"On trouva le moyen rare d'enrichir la couronne sans blesser personne d'important."}}
     }},
    {label:"Proposer aux Cortès un contrat : impôt régulier consenti chaque décennie, contre droit de regard sur la dépense.",
-    voie:"hérétique", port:"justice", base:28, cost:4,
+    voie:"inouïe", port:"justice", base:28, cost:4,
     note:"Un budget contrôlé. Aucune monarchie ibérique n'acceptera cela avant très longtemps.",
     out:{
       crit:{t:"Les procureurs, encouragés, réclament aussi le contrôle des nominations. Ce qui devait renforcer la couronne devient une machine à la limiter.", e:{au:-20,co:14,dv:12,inject:["cortes_exigeantes"],ch:"On ouvrit une porte, et l'on ne put plus la refermer."}},
@@ -340,14 +341,14 @@ const NODES = {
     voie:"historique", port:"guerre", base:40, cost:4,
     note:"Alhama est à quarante lieues derrière les lignes. Si l'on y entre, on ne pourra plus reculer.",
     out:{
-      crit:{t:"La colonne est interceptée dans la sierra. Le marquis s'échappe, l'essentiel de sa troupe non, et l'Andalousie apprend qu'elle est sans défense.", e:{au:-17,no:-10,t:-4,pr:-5,ch:"On envoya des hommes derrière les montagnes et ils n'en revinrent pas."}},
-      fail:{t:"L'escalade échoue de peu. La surprise est perdue et Grenade fortifie tout ce qui pouvait l'être.", e:{au:-8,t:-4,ch:"Il manqua une échelle et deux heures de nuit."}},
-      part:{t:"Alhama tombe et devient aussitôt intenable : il faut la ravitailler à travers le territoire ennemi, indéfiniment.", e:{au:8,t:-5,flag:"alhama",flag2:"guerre_grenade",ch:"On prit une ville qu'il fallut ensuite nourrir à bout de bras."}},
-      succ:{t:"Alhama est prise et tenue. La guerre de Grenade commence — non plus une frontière, mais une conquête.", e:{au:14,ro:6,no:7,flag:"alhama",flag2:"guerre_grenade",ch:"Ce ne fut plus une frontière, mais une entreprise."}},
-      tri:{t:"La prise est si nette qu'elle vaut proclamation. Rome accorde la bulle de croisade et l'argent de la chrétienté commence à entrer.", e:{au:18,ro:12,t:8,no:9,flag:"alhama",flag2:"guerre_grenade",flag3:"bulle_croisade",ch:"Une échelle posée de nuit sur un mur ouvrit dix ans de guerre et vingt ans de gloire."}}
+      crit:{t:"La colonne est interceptée dans la sierra. Le marquis s'échappe, l'essentiel de sa troupe non, et l'Andalousie apprend qu'elle est sans défense.", e:{guerre:"grenade",au:-17,no:-10,t:-4,pr:-5,ch:"On envoya des hommes derrière les montagnes et ils n'en revinrent pas."}},
+      fail:{t:"L'escalade échoue de peu. La surprise est perdue et Grenade fortifie tout ce qui pouvait l'être.", e:{guerre:"grenade",au:-8,t:-4,ch:"Il manqua une échelle et deux heures de nuit."}},
+      part:{t:"Alhama tombe et devient aussitôt intenable : il faut la ravitailler à travers le territoire ennemi, indéfiniment.", e:{guerre:"grenade",au:8,t:-5,flag:"alhama",inject:["siege_alhama"],flag2:"guerre_grenade",ch:"On prit une ville qu'il fallut ensuite nourrir à bout de bras."}},
+      succ:{t:"Alhama est prise et tenue. La guerre de Grenade commence — non plus une frontière, mais une conquête.", e:{guerre:"grenade",au:14,ro:6,no:7,flag:"alhama",inject:["siege_alhama"],flag2:"guerre_grenade",ch:"Ce ne fut plus une frontière, mais une entreprise."}},
+      tri:{t:"La prise est si nette qu'elle vaut proclamation. Rome accorde la bulle de croisade et l'argent de la chrétienté commence à entrer.", e:{guerre:"grenade",au:18,ro:12,t:8,no:9,flag:"alhama",inject:["siege_alhama"],flag2:"guerre_grenade",flag3:"bulle_croisade",ch:"Une échelle posée de nuit sur un mur ouvrit dix ans de guerre et vingt ans de gloire."}}
     }},
    {label:"Négocier avec Grenade : restitution de Zahara, tribut, et une trêve longue garantie par écrit.",
-    voie:"hérétique", port:"diplomatie", base:34, cost:2,
+    voie:"inouïe", port:"diplomatie", base:34, cost:2,
     note:"Renoncer à la conquête. Le clergé, la noblesse andalouse et la chrétienté entière vous le reprocheront.",
     out:{
       crit:{t:"Abu al-Hasan refuse avec mépris et publie la lettre. Le roi de Castille a demandé la paix à un roi maure : la cour ne s'en remet pas.", e:{au:-22,ro:-12,no:-14,dv:10,ch:"On demanda la paix et l'on reçut le mépris, ce qui coûte plus cher qu'une défaite."}},
@@ -387,7 +388,7 @@ const NODES = {
       tri:{t:"Marine, capitaux et cartographes convergent à Séville. Dix ans d'avance sur l'histoire, et personne à la cour ne sait encore ce que cela vaudra.", e:{pr:19,t:12,au:9,dv:12,flag:"cap_mer",flag2:"ocean_dabord",ch:"On mit tout dans l'océan, sans savoir ce qu'il y avait au bout."}}
     }},
    {label:"L'intérieur. Achever l'administration, les tribunaux, l'université et les comptes avant toute aventure.",
-    voie:"hérétique", port:"admin", base:38, cost:4,
+    voie:"inouïe", port:"admin", base:38, cost:4,
     note:"Aucun souverain de ce siècle n'a choisi de ne rien conquérir pendant dix ans.",
     out:{
       crit:{t:"La noblesse et le clergé, privés de guerre et de butin, s'agitent. On reproche au roi de gouverner comme un notaire.", e:{no:-16,ro:-8,au:-10,dv:9,ch:"On reprocha au roi de préférer les registres aux batailles."}},

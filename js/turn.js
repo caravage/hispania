@@ -1,21 +1,61 @@
 /* turn.js — la boucle de l'année.
    Ordre d'un tour : rentrées → répartition → situations → chronique.
-   buildYear() compose le deck de l'année :
-     1. le nœud historique, s'il en existe un pour cette année-là ;
-     2. les conséquences semées les années précédentes (S.queue) ;
-     3. un ou deux événements de tirage, si la place le permet.
-   Le plafond de deux situations quand une conséquence remonte est délibéré :
-   une année où le passé vous rattrape ne doit pas aussi être une année chargée. */
+
+   buildYear() compose le deck de l'année. Le nombre de situations n'est plus
+   un tirage nu : il est dicté par l'état du royaume, et le joueur doit pouvoir
+   dire pourquoi son année est chargée. Dans l'ordre de priorité :
+
+     1. le nœud historique de l'année — il tombe toujours ;
+     2. la guerre : chaque guerre en cours impose une situation de plus ;
+     3. les conséquences semées les années précédentes (S.queue) ;
+     4. l'ordinaire du royaume, tiré dans POOL pour compléter.
+
+   Le plancher est de deux situations, le plafond de cinq — au-delà l'année
+   cesse d'être lisible. yearNote dit au joueur ce qui a chargé son calendrier. */
 
 function buildYear(){
-  const list=[];
+  const list=[], causes=[];
+
   if(NODES[S.year]) list.push(NODES[S.year]);
-  while(S.queue.length && list.length<2){ const id=S.queue.shift(); if(INJECTED[id]) list.push(INJECTED[id]); }
+
+  /* La France entre sans prévenir : la menace est évaluée à la composition du
+     deck, donc l'invasion tombe l'année même où la relation s'effondre. */
+  if(menaceFrance()) S.queue.unshift("invasion_francaise");
+
+  const guerres=enGuerre();
+  let cible = 2 + guerres.length;
+  if(guerres.length) causes.push(guerres.length>1
+    ? "Le royaume est engagé sur "+guerres.length+" fronts."
+    : "Le royaume est engagé dans "+nomGuerre(guerres[0])+".");
+  cible=Math.min(5,cible);
+
+  // Les conséquences semées passent avant le tirage : le passé a la priorité
+  // sur l'ordinaire.
+  let dettes=0;
+  while(S.queue.length && list.length<cible){
+    const id=S.queue.shift();
+    if(INJECTED[id]){ list.push(INJECTED[id]); dettes++; }
+  }
+  if(dettes) causes.push(dettes>1
+    ? "Plusieurs affaires laissées en suspens remontent."
+    : "Une affaire laissée en suspens remonte.");
+
   const cands=POOL.filter(e=>!S.seen[e.id] && e.years.includes(S.year) && (!e.req||e.req(S)));
-  const n = list.length>=2?0:(Math.random()<.45?2:1);
-  for(let i=0;i<n && cands.length;i++){
+  while(list.length<cible && cands.length){
     const e=cands.splice(Math.floor(Math.random()*cands.length),1)[0];
     S.seen[e.id]=true; list.push(e);
   }
+
+  /* `etat` : ce que la situation impose par sa seule survenue, avant tout
+     choix. La guerre de Succession n'est pas la conséquence d'une décision —
+     Afonso a passé la frontière. Appliqué à l'entrée dans le deck, donc jamais
+     défait par la Fortune, qui ne rejoue que des jets. */
+  list.forEach(e=>{
+    if(!e.etat) return;
+    if(e.etat.guerre && !S.guerres[e.etat.guerre] && !S.paix[e.etat.guerre])
+      S.guerres[e.etat.guerre]=S.year;
+  });
+
   S.year_events=list;
+  S.yearNote=causes.join(" ");
 }

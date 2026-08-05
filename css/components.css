@@ -96,6 +96,50 @@
 .step:focus-visible{outline:2px solid var(--cinnabar);outline-offset:-3px}
 .warn{font-size:16px;color:var(--cinnabar);font-style:italic;margin-top:9px}
 
+/* ---------- guerre, charge de l'année ----------
+   Le cinabre ne sert qu'aux trois choses prévues : chiffres qui changent,
+   option retenue, alerte. Une guerre en cours est une alerte permanente. */
+.ledger-row .war{color:var(--cinnabar);font-weight:600}
+.yearnote{
+  font-size:16.5px;color:var(--ink-soft);font-style:italic;
+  border-left:2px solid var(--cinnabar);padding-left:13px;margin:-6px 0 16px;
+}
+
+/* ---------- ce que le règne aura laissé ----------
+   Des phrases, pas un score : le total n'apparaît qu'au bilan. */
+.acquis{display:flex;flex-direction:column;gap:13px;margin:4px 0 8px}
+.aq{border-left:2px solid var(--rule);padding-left:14px}
+.aq.bad,.aq.lost{border-left-color:var(--cinnabar)}
+.aq.lost .aq-n,.aq.lost .aq-d{text-decoration:line-through;text-decoration-color:var(--rule)}
+.aq-n{font-size:18px}
+.aq-y{
+  font-family:var(--util);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink-faint);margin-left:9px;
+}
+.aq-d{font-size:16px;color:var(--ink-soft);font-style:italic;margin-top:3px}
+
+/* ---------- le compte du règne (bilan seulement) ---------- */
+.vp-total{
+  display:flex;justify-content:space-between;align-items:baseline;
+  border-top:1px solid var(--ink);border-bottom:1px solid var(--ink);
+  padding:13px 0;margin:14px 0 4px;
+  font-family:var(--util);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);
+}
+.vp-big{font-size:34px;letter-spacing:0;color:var(--cinnabar);font-weight:600;font-variant-numeric:tabular-nums}
+.tally-vp{display:flex;flex-direction:column}
+.vp-row{
+  display:flex;justify-content:space-between;align-items:baseline;gap:20px;
+  padding:11px 0;border-bottom:1px solid var(--rule-fine);
+}
+.vp-row.lost .vp-n,.vp-row.lost .vp-d{color:var(--ink-faint)}
+.vp-n{font-size:18px}
+.vp-d{font-size:15.5px;color:var(--ink-soft);font-style:italic;margin-top:2px}
+.vp-p{
+  font-family:var(--util);font-size:17px;font-weight:600;white-space:nowrap;
+  font-variant-numeric:tabular-nums;color:var(--ink);
+}
+.vp-row.lost .vp-p,.vp-row.bad .vp-p{color:var(--cinnabar)}
+
 /* ---------- légende des jauges (ouverture) ----------
    Même vocabulaire que les portefeuilles : nom en romaine, glose en italique
    pâle. La ligne des cinq mots donne l'échelle sans donner le chiffre. */

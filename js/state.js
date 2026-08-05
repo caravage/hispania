@@ -11,19 +11,28 @@
    divergence écart cumulé avec l'histoire réelle
    fortune   relances restantes, trois pour tout le règne
    flags     acquis durables du règne
+   exploits  ceux des acquis qui comptent au bilan : id → année d'obtention
+   perdus    exploits repris depuis : id → année de la perte
+   vp        points gagnés issue par issue, hors exploits
+   guerres   guerres en cours : id → année d'entrée. Elles coûtent chaque
+             année et chargent le calendrier tant qu'elles durent.
    queue     événements semés, en attente
    seen      événements de tirage déjà sortis
    pending   la décision en cours : option, manière, jet, relance */
 
 const S = {
   year:1474, idx:0, phase:"intro",
-  tresor:5, revenu:0,
-  g:{autorite:34, cortes:42, rome:55, prosperite:30, noblesse:26},
+  tresor:5, revenu:0, solde:0,
+  // france : Louis XI arme le Portugal contre vous et tient le Roussillon.
+  // On commence « menaçante », ce qui est l'état réel de 1474.
+  g:{autorite:34, cortes:42, rome:55, prosperite:30, noblesse:26, france:34},
   budget:{justice:1,guerre:2,foi:1,diplomatie:1,cour:2,admin:1},
   lastBudget:null,
   divergence:0, fortune:3,
-  flags:{}, queue:[], seen:{},
+  flags:{}, exploits:{}, perdus:{}, vp:0,
+  guerres:{}, paix:{}, queue:[], seen:{},
   chronicle:[], year_events:[], ev_i:0,
+  yearNote:"",
   pending:null
 };
 
