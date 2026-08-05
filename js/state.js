@@ -1,39 +1,40 @@
 /* state.js — l'état de la partie, en un seul objet.
    Tout est ici et nulle part ailleurs : aucune donnée de jeu ne vit dans le DOM.
-   Pour ajouter une sauvegarde, il suffit de sérialiser S.
 
-   year/idx  année courante et son rang dans YEARS
-   phase     écran affiché : intro, budget, event, resolve, chronicle, end
-   tresor    réserve, en millions de maravédis (ordre de grandeur d'époque)
-   g         les cinq jauges politiques, 0–100, affichées en mots jamais en chiffres
-   budget    cran de dotation de chaque portefeuille, 0–4
-   lastBudget budget de l'année précédente, pour détecter les coupes brutales
-   divergence écart cumulé avec l'histoire réelle
-   fortune   relances restantes, trois pour tout le règne
-   flags     acquis durables du règne
-   exploits  ceux des acquis qui comptent au bilan : id → année d'obtention
-   perdus    exploits repris depuis : id → année de la perte
-   vp        points gagnés issue par issue, hors exploits
-   guerres   guerres en cours : id → année d'entrée. Elles coûtent chaque
-             année et chargent le calendrier tant qu'elles durent.
-   queue     événements semés, en attente
-   seen      événements de tirage déjà sortis
-   pending   la décision en cours : option, manière, jet, relance */
+   L'acte s'ouvre en 1479. Alcáçovas met fin à la guerre de Succession et
+   Ferdinand hérite de l'Aragon la même année : c'est le moment où les deux
+   souverains sont définitivement en place et où le règne commence vraiment.
+   Ce qui précède est acquis et n'est plus rejoué. */
 
 const S = {
-  year:1474, idx:0, phase:"intro",
-  tresor:5, revenu:0, solde:0,
-  // france : Louis XI arme le Portugal contre vous et tient le Roussillon.
-  // On commence « menaçante », ce qui est l'état réel de 1474.
-  g:{autorite:34, cortes:42, rome:55, prosperite:30, noblesse:26, france:34},
+  year:1479, idx:0, phase:"intro",
+
+  tresor:14, revenu:0, solde:0, detteAnnee:false,
+
+  /* Sortie de la guerre de Succession : l'autorité est reconnue mais neuve,
+     les villes ont payé et attendent, la noblesse a été achetée plus que
+     soumise, le pays sort de cinq ans de campagnes, et la France n'a pas
+     désarmé — elle tient toujours le Roussillon. */
+  g:{autorite:48, noblesse:38, prosperite:36, cortes:52, france:32},
+
   budget:{justice:1,guerre:2,foi:1,diplomatie:1,cour:2,admin:1},
   lastBudget:null,
-  divergence:0, fortune:3,
-  flags:{}, exploits:{}, perdus:{}, vp:0,
-  guerres:{}, paix:{}, queue:[], seen:{},
-  chronicle:[], year_events:[], ev_i:0,
-  yearNote:"",
+
+  flags:{}, exploits:{}, perdus:{},
+  guerres:{}, paix:{},
+  queue:[], seen:{},
+
+  chronicle:[],        // { y, txt } — ce que le chroniqueur retient
+  archives:[],         // { y, ev, opt, bande, txt } — l'historique consultable
+  year_events:[], ev_i:0, yearNote:"",
   pending:null
 };
 
-const YEARS = [1474,1475,1476,1477,1478,1479,1480,1481,1482];
+const YEARS = [1479,1480,1481,1482,1483,1484,1485,1486,1487];
+
+/* Ce qui est déjà vrai en 1479 et n'a pas à être rejoué. Ces marqueurs
+   conditionnent des situations à venir sans valoir de point : ce sont des
+   acquis du règne précédent, pas des exploits de celui-ci. */
+S.flags.hermandad = true;      // instituée aux Cortès de Madrigal, 1476
+S.flags.paix_portugal = true;  // Alcáçovas, septembre 1479
+S.paix.portugal = {debut:1475, fin:1479};

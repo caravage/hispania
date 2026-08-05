@@ -11,6 +11,14 @@
   --rule:#B6AE9C;
   --rule-fine:#C9C2B2;
   --cinnabar:#A32A17;
+
+  /* Le dégradé des paliers de jauge, du pire au meilleur. Désaturés pour tenir
+     sur le fond papier : ce n'est pas un feu tricolore, c'est de l'encre. */
+  --p0:#A32A17;
+  --p1:#9E5A22;
+  --p2:#6E6A52;
+  --p3:#4F6E36;
+  --p4:#35602C;
   --measure:648px;
   --serif:"EB Garamond",Georgia,serif;
   --util:"Archivo Narrow","Arial Narrow",sans-serif;

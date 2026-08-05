@@ -5,6 +5,10 @@
   h1{font-size:27px}h2{font-size:22px}
   .roll{font-size:48px}
   .opt-label{font-size:18px}
-  .step,.mode{font-size:9.5px;letter-spacing:.05em}
+  .step{font-size:9.5px;letter-spacing:.05em}
+  .lg-jauges{gap:3px 14px}
+  .lg-j,.lg-gn{font-size:11px}
+  .ch-tags{gap:5px 6px}
+  .vp-row,.ef{gap:10px}
 }
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}

@@ -20,13 +20,14 @@ const FICHIERS = ["js/data/config.js","js/data/art.js","js/data/exploits.js","js
 const ctx = vm.createContext({Math, JSON, console, Object, Array, String, Number});
 const src = FICHIERS.map(f => fs.readFileSync(path.join(R, f), "utf8")).join("\n;\n");
 const X = vm.runInContext(src +
-  "\n;({NODES,POOL,INJECTED,ART,EXPLOITS,GUERRES,PF,YEARS,BAND_KEYS,BAND_VP,RISK,S,bands,score})",
+  "\n;({NODES,POOL,INJECTED,ART,EXPLOITS,GUERRES,PF,YEARS,BAND_KEYS,PORT_JAUGE,S,bands,score})",
   ctx, {filename: "bundle.js"});
 
 const err = [], warn = [];
-const EFFETS = ["t","au","co","ro","pr","no","fr","dv","flag","flag2","flag3",
+const EFFETS = ["t","au","co","pr","no","fr","flag","flag2","flag3",
                 "inject","ch","perte","guerre","paix"];
 const VOIES = ["historique","divergente","inouïe"];
+const FORMES = [undefined,"normale","sure","extreme"];
 const ports = new Set(X.PF.map(p => p.k));
 
 const tous = [
@@ -52,6 +53,8 @@ for (const [ou, e] of tous) {
     if (!ports.has(o.port)) err.push(`${w} : portefeuille inconnu « ${o.port} »`);
     if (typeof o.base !== "number") err.push(`${w} : base absente`);
     if (typeof o.cost !== "number") err.push(`${w} : cost absent`);
+    if (!FORMES.includes(o.forme)) err.push(`${w} : forme inconnue « ${o.forme} »`);
+    if (!X.PORT_JAUGE[o.port]) err.push(`${w} : portefeuille « ${o.port} » sans jauge associée`);
     if (!o.out) return err.push(`${w} : pas d'issues`);
 
     X.BAND_KEYS.forEach(k => {
@@ -91,9 +94,8 @@ Object.keys(X.EXPLOITS).forEach(k => {
   if (typeof e.vp !== "number") err.push(`exploit « ${k} » : vp absent`);
   if (e.perte && typeof e.perte.vp !== "number") err.push(`exploit « ${k} » : perte sans vp`);
 });
-[...marqueurs].forEach(f => {
-  if (!X.EXPLOITS[f]) warn.push(`marqueur « ${f} » posé mais sans entrée dans EXPLOITS — il ne compte nulle part`);
-});
+// Un marqueur sans entrée dans EXPLOITS est normal : tout ce qui réussit ne
+// mérite pas d'être un exploit. On ne vérifie que l'inverse.
 Object.keys(X.INJECTED).forEach(k => {
   if (!semes.has(k) && k !== "invasion_francaise") warn.push(`semé « ${k} » n'est déclenché par aucune issue`);
 });
@@ -102,10 +104,10 @@ Object.keys(X.GUERRES).forEach(k => {
 });
 
 // Les cinq largeurs doivent toujours totaliser 100, sinon une bande est perdue.
-Object.keys(X.RISK).forEach(r => {
+["normale","sure","extreme"].forEach(f => {
   for (let T = 3; T <= 97; T++) {
-    const s = X.bands(T, r).reduce((a, b) => a + b, 0);
-    if (Math.abs(s - 100) > 1e-9) { err.push(`bands(${T}, ${r}) totalise ${s} au lieu de 100`); break; }
+    const s = X.bands(T, f).reduce((a, b) => a + b, 0);
+    if (Math.abs(s - 100) > 1e-9) { err.push(`bands(${T}, ${f}) totalise ${s} au lieu de 100`); break; }
   }
 });
 

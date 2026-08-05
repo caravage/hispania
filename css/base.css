@@ -25,13 +25,7 @@ body::before{
   border-bottom:1px solid var(--rule);
   margin:0 -20px;padding:0 20px;
 }
-.ledger-in{max-width:var(--measure);margin:0 auto;padding:11px 0 10px}
-.ledger-row{
-  display:flex;flex-wrap:wrap;gap:4px 22px;align-items:baseline;
-  font-family:var(--util);font-size:12px;letter-spacing:.11em;text-transform:uppercase;
-  color:var(--ink-soft);
-}
-.ledger-row b{font-weight:600;color:var(--ink);letter-spacing:.06em}
+.ledger-in{max-width:var(--measure);margin:0 auto;padding:10px 0 9px}
 .ledger .yr{font-weight:600;color:var(--ink);letter-spacing:.16em}
 .coin{color:var(--cinnabar);font-weight:600}
 .delta{color:var(--cinnabar);font-weight:600;font-size:11px;margin-left:3px}
