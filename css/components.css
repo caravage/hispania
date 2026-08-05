@@ -265,3 +265,22 @@
 .arch-b.b0,.arch-b.b1{color:var(--cinnabar)}
 .arch-b.b4{color:var(--p4)}
 .arch-x{font-size:16px;font-style:italic;color:var(--ink-soft);margin-top:5px}
+
+
+/* ═══════════ prologue ═══════════ */
+.opts.pro .opt{cursor:pointer}
+.pro-eff{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px 9px;margin-top:9px}
+.pe{
+  font-family:var(--util);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+  border:1px solid var(--rule-fine);padding:3px 8px;color:var(--ink-faint);
+}
+.pe.pos{color:var(--p4);border-color:var(--p4)}
+.pe.neg{color:var(--p0);border-color:var(--p0)}
+.pe.marque{color:var(--ink);border-color:var(--ink)}
+
+/* ═══════════ la réponse retenue, à la résolution ═══════════ */
+.res-opt{
+  border-left:2px solid var(--cinnabar);padding-left:14px;margin-top:16px;font-size:18px;
+}
+.res-note{display:block;font-size:16px;color:var(--ink-soft);font-style:italic;margin-top:3px}
+.fleche.nul{color:var(--ink-faint)}

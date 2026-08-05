@@ -13,14 +13,14 @@ const fs = require("fs"), vm = require("vm"), path = require("path");
 const R = path.join(__dirname, "..");
 
 const FICHIERS = ["js/data/config.js","js/data/art.js","js/data/exploits.js","js/data/nodes.js",
-                  "js/data/pool.js","js/data/injected.js","js/state.js","js/rules.js","js/turn.js"];
+                  "js/data/prologue.js","js/data/pool.js","js/data/injected.js","js/state.js","js/rules.js","js/turn.js"];
 
 // `const` en tête de script ne s'attache pas à globalThis : on concatène et on
 // exporte explicitement, comme le fait le navigateur avec des scripts classiques.
 const ctx = vm.createContext({Math, JSON, console, Object, Array, String, Number});
 const src = FICHIERS.map(f => fs.readFileSync(path.join(R, f), "utf8")).join("\n;\n");
 const X = vm.runInContext(src +
-  "\n;({NODES,POOL,INJECTED,ART,EXPLOITS,GUERRES,PF,YEARS,BAND_KEYS,PORT_JAUGE,S,bands,score})",
+  "\n;({NODES,POOL,INJECTED,ART,EXPLOITS,GUERRES,PF,YEARS,BAND_KEYS,PORT_JAUGE,PROLOGUE,JAUGE_CLE,S,bands,score})",
   ctx, {filename: "bundle.js"});
 
 const err = [], warn = [];
@@ -75,6 +75,27 @@ for (const [ou, e] of tous) {
   });
 }
 
+// Prologue : cinq décisions sèches, une par année de 1474 à 1478.
+X.PROLOGUE.forEach((p, i) => {
+  const w = `prologue[${i}] ${p.y}`;
+  if (!p.t || !p.body || !p.place) err.push(`${w} : titre, lieu ou corps manquant`);
+  if (!Array.isArray(p.opts) || p.opts.length < 2) err.push(`${w} : moins de deux décisions`);
+  (p.opts || []).forEach((o, j) => {
+    if (!o.label || !o.note) err.push(`${w} opt[${j}] : label ou glose manquant`);
+    const eff = o.e || {};
+    if (!Object.keys(eff).length) err.push(`${w} opt[${j}] : décision sans effet`);
+    Object.keys(eff).forEach(k => {
+      if (!EFFETS.includes(k)) err.push(`${w} opt[${j}] : effet inconnu « ${k} »`);
+    });
+    [eff.flag, eff.flag2, eff.flag3].forEach(f => f && marqueurs.add(f));
+  });
+});
+const anneesPro = X.PROLOGUE.map(p => p.y);
+[1474,1475,1476,1477,1478].forEach(y => {
+  if (!anneesPro.includes(y)) warn.push(`le prologue ne couvre pas ${y}`);
+});
+anneesPro.forEach(y => { if (X.YEARS.includes(y)) err.push(`prologue ${y} : cette année est aussi jouée`); });
+
 // Années
 X.POOL.forEach(e => {
   if (!Array.isArray(e.years) || !e.years.length) return err.push(`tirage ${e.id} : years manquant`);
@@ -117,7 +138,8 @@ tous.forEach(([ou, e]) => {
 });
 
 const n = tous.length, nOpts = tous.reduce((s, e) => s + e[1].opts.length, 0);
-console.log(`${n} situations · ${nOpts} options · ${Object.keys(X.EXPLOITS).length} exploits · ${marqueurs.size} marqueurs`);
+const nPro = X.PROLOGUE.reduce((s, p) => s + p.opts.length, 0);
+console.log(`${n} situations · ${nOpts} options · ${X.PROLOGUE.length} décisions de prologue (${nPro} choix) · ${Object.keys(X.EXPLOITS).length} exploits · ${marqueurs.size} marqueurs`);
 console.log(`\nERREURS (${err.length})`); err.forEach(e => console.log("  ✗ " + e));
 console.log(`\nAVERTISSEMENTS (${warn.length})`); warn.forEach(w => console.log("  · " + w));
 process.exit(err.length ? 1 : 0);

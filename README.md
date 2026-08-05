@@ -2,7 +2,9 @@
 
 Jeu de gestion textuel. Le royaume est à vous ; reste à savoir ce qu'il devient.
 
-L'acte s'ouvre en 1479 : Alcáçovas met fin à la guerre de Succession et Ferdinand hérite de l'Aragon la même année. C'est le moment où les deux souverains sont définitivement en place. Ce qui précède est acquis et n'est pas rejoué — une partie ne recommence pas par la même guerre.
+L'acte s'ouvre en 1479 : Alcáçovas met fin à la guerre de Succession et Ferdinand hérite de l'Aragon la même année. C'est le moment où les deux souverains sont définitivement en place.
+
+Les cinq années d'avant se règlent en **prologue** : cinq décisions rapides, sans dé et sans coût, qui disent seulement comment on est sorti de la guerre de Succession. Elles annoncent leurs effets — il n'y a rien à cacher là où il n'y a pas de hasard — et composent l'état de 1479. Le point de départ n'est donc pas fixe : c'est le résultat de ces cinq choix.
 
 Ouvrir `index.html` dans un navigateur. Pas de serveur, pas d'installation, pas d'étape de compilation.
 
@@ -15,9 +17,11 @@ Neuf années, une par tour. Chaque année :
 1. **Rentrées** — le trésor s'alimente. Le montant varie.
 2. **Répartition** — six portefeuilles, cinq crans de dotation chacun. Il n'y a jamais de quoi tenir les six.
 3. **Situations** — de deux à cinq. Le nœud historique de l'année, plus une situation par guerre en cours, plus ce que le passé vous renvoie, plus l'ordinaire du royaume. Le jeu vous dit ce qui a chargé l'année.
-4. **Chronique** — ce que l'année laisse par écrit, et ce qu'elle a fixé. Les années précédentes sont dans les **archives**, consultables à tout moment.
+4. **Chronique** — ce que l'année laisse par écrit, ce qu'elle a fixé, et le mouvement de chaque jauge sur les douze mois. Les années précédentes sont dans les **archives**, consultables à tout moment.
 
-Chaque situation offre plusieurs réponses. Les données les classent en **historique**, **divergente** et **inouïe**, mais **le joueur ne voit jamais ces mots** et l'ordre d'affichage est tiré au sort à chaque partie : rien ne désigne la voie que l'histoire a suivie. Sous chaque réponse envisagée, le jeu montre de quoi dépend la chance — le portefeuille, sa dotation, la jauge associée et son état — avec une barre qui donne la mesure. Le détail chiffré reste dépliable pour qui veut vérifier ligne à ligne.
+Chaque situation offre plusieurs réponses. Les données les classent en **historique**, **divergente** et **inouïe**, mais **le joueur ne voit jamais ces mots** et l'ordre d'affichage est tiré au sort à chaque partie : rien ne désigne la voie que l'histoire a suivie.
+
+Sous chaque réponse, sans avoir à la sélectionner : le portefeuille et sa dotation, la jauge dont elle dépend et son état, le coût, et l'issue probable avec sa barre. Le détail chiffré se déplie sur la réponse retenue. La glose en italique — ce que l'option engage vraiment — n'apparaît qu'à la résolution, une fois le sort jeté.
 
 La règle qui tient l'uchronie est dans le mot **osé**. « Personne n'a osé » n'est pas « personne n'a imaginé » : une réponse inouïe doit rester une chose qu'un conseiller de 1484 aurait pu formuler devant la reine sans passer pour fou. Une option qu'aucun contemporain n'aurait pu concevoir n'est pas audacieuse, elle est anachronique — et elle n'a pas sa place ici.
 
@@ -47,6 +51,7 @@ js/
     config.js           portefeuilles, crans, jauges, rentes — tout l'équilibrage
     art.js              manifeste des œuvres (noms de fichiers Wikimedia Commons)
     exploits.js         les acquis du règne et ce qu'ils valent au bilan
+    prologue.js         les cinq décisions de 1474-1478, sans dé ni coût
     nodes.js            les neuf nœuds historiques, un par année (1479-1487)
     pool.js             événements de tirage, dont l'ordinaire du royaume
     injected.js         conséquences différées, semées par une issue précédente

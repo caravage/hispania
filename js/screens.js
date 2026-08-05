@@ -36,9 +36,12 @@ function ledger(){
 
   const guerres=enGuerre().map(k=>`<span class="war">${nomGuerre(k)}</span>`).join("");
 
+  // Pendant le prologue, l'année affichée est celle qu'on décide, pas 1479.
+  const annee = S.phase==="prologue" && PROLOGUE[S.pro_i] ? PROLOGUE[S.pro_i].y : S.year;
+
   document.getElementById("ledger").innerHTML=`
     <div class="lg-top">
-      <span class="yr">${S.year}</span>
+      <span class="yr">${annee}</span>
       <span class="lg-tresor ${S.tresor<0?"dette":""}">Trésor <b>${S.tresor}</b></span>
       ${guerres}
       <button class="lg-aide" id="aide" aria-expanded="${legendeOuverte}">${legendeOuverte?"Masquer la légende":"Que veut dire tout ceci ?"}</button>
@@ -80,8 +83,8 @@ function ordreOptions(ev){
 
 /* ---------- écrans ---------- */
 const app=()=>document.getElementById("app");
-const ECRANS={intro:sIntro,budget:sBudget,event:sEvent,resolve:sResolve,
-              chronicle:sChron,archives:sArchives,end:sEnd};
+const ECRANS={intro:sIntro,prologue:sPrologue,budget:sBudget,event:sEvent,
+              resolve:sResolve,chronicle:sChron,archives:sArchives,end:sEnd};
 function render(){ ledger(); ECRANS[S.phase](); window.scrollTo(0,0); }
 
 function sIntro(){
@@ -95,16 +98,56 @@ function sIntro(){
     <p class="dropcap">La guerre de Succession est finie. Juana entrera au couvent, le Portugal garde la Guinée, et Ferdinand vient d'hériter de l'Aragon : les deux souverains sont enfin en place et personne ne conteste plus leur titre. Ce qui reste à faire est tout le reste.</p>
     <p>Le trésor rapporte moins de la moitié de ce qu'il rapportait il y a trente ans. La moitié du revenu royal est aux mains des grands. La frontière de Grenade est ouverte depuis cent cinquante ans. La France tient le Roussillon et attend son heure.</p>
     <p>Neuf années. Chacune commence par la répartition de l'argent entre six portefeuilles — vous n'aurez jamais de quoi les tenir tous — et se poursuit par les situations que l'année impose. Chaque réponse se joue aux dés, et vous voyez avant de choisir de quoi dépend votre chance.</p>
+    <p>Avant cela, cinq décisions rapides pour les cinq années qui précèdent. Elles ne se jouent pas aux dés : elles disent seulement comment vous êtes sorti de la guerre de Succession, et c'est de cette sortie que dépend le royaume de 1479.</p>
   </div>
   <div class="act">
-    <button class="btn" id="go">Commencer — janvier 1479</button>
+    <button class="btn" id="go">Commencer — les cinq années d'avant</button>
     ${sauvegarde()?`<button class="btn ghost" id="reprendre">Reprendre le règne en ${sauvegarde().year}</button>`:""}
   </div>`;
-  document.getElementById("go").onclick=()=>{effacerSauvegarde();S.phase="budget";rentrees();sauver();render()};
+  document.getElementById("go").onclick=()=>{effacerSauvegarde();S.phase="prologue";S.pro_i=0;render()};
   const rep=document.getElementById("reprendre");
   if(rep) rep.onclick=()=>{ if(charger()) render(); };
 }
 
+
+/* Le prologue : cinq décisions sans dé, sans coût et sans retour. Elles ne
+   composent pas une partie mais un point de départ — d'où la mise en page
+   plus sèche que le reste, et l'état du royaume montré après chaque choix. */
+function sPrologue(){
+  const p=PROLOGUE[S.pro_i];
+  if(!p){ S.phase="budget"; S.gDebut={...S.g}; rentrees(); sauver(); render(); return; }
+
+  app().innerHTML=`
+  <div style="padding-top:40px"></div>
+  <div class="eyebrow">Les années d'avant · ${S.pro_i+1} sur ${PROLOGUE.length}</div>
+  <h2>${p.t}</h2>
+  <div class="place">${p.place}</div>
+  <div class="body"><p class="dropcap">${p.body}</p></div>
+  <div class="opts pro">${p.opts.map((o,i)=>`
+    <button class="opt" data-i="${i}">
+      <span class="opt-label">${o.label}</span>
+      <span class="opt-note">${o.note}</span>
+      <span class="pro-eff">${effetsPrevus(o.e)}</span>
+    </button>`).join("")}</div>`;
+
+  app().querySelectorAll(".opt").forEach(b=>b.onclick=()=>{
+    apply(p.opts[+b.dataset.i].e);
+    S.pro_i++; render();
+  });
+}
+
+/* Le prologue annonce ses effets : il n'y a pas de dé, donc rien à cacher. */
+function effetsPrevus(e){
+  const out=[];
+  if(e.t) out.push(`<span class="pe ${e.t<0?"neg":"pos"}">Trésor ${e.t>0?"+":""}${e.t}</span>`);
+  Object.keys(JAUGE_CLE).forEach(k=>{
+    if(!e[k]) return;
+    const g=JAUGE_CLE[k];
+    out.push(`<span class="pe ${e[k]<0?"neg":"pos"}">${GAUGES[g].n} ${e[k]>0?"▲":"▼"}</span>`);
+  });
+  if(e.flag && EXPLOITS[e.flag]) out.push(`<span class="pe marque">${EXPLOITS[e.flag].n}</span>`);
+  return out.join("");
+}
 
 function sBudget(){
   const spent=budgetCost(S.budget), reste=S.tresor-spent;
@@ -136,9 +179,9 @@ function sBudget(){
   <h2>La bourse de l'année</h2>
 
   <details class="rentes"><summary>Rentrées de l'année : ${S.revenu}${S.solde?` · solde des guerres : −${S.solde}`:""}</summary>
-    <table>${d.lignes.map(l=>`<tr><td>${l.n}<span class="r-d">${l.d}</span></td><td>${l.v}</td></tr>`).join("")}
-    ${d.reformes.map(r=>`<tr><td>${r.n}<span class="r-d">Réforme acquise du règne.</span></td><td>+${r.v}</td></tr>`).join("")}
-    ${enGuerre().map(k=>`<tr class="neg"><td>${nomGuerre(k)}<span class="r-d">Solde et vivres, tant qu'elle dure.</span></td><td>−${GUERRES[k].solde}</td></tr>`).join("")}
+    <table>${d.lignes.map(l=>`<tr><td>${l.n}</td><td>${l.v}</td></tr>`).join("")}
+    ${d.reformes.map(r=>`<tr><td>${r.n}</td><td>+${r.v}</td></tr>`).join("")}
+    ${enGuerre().map(k=>`<tr class="neg"><td>${nomGuerre(k).replace(/^la /,"")}</td><td>−${GUERRES[k].solde}</td></tr>`).join("")}
     </table></details>
 
   <div class="purse">
@@ -172,7 +215,7 @@ function sBudget(){
 /* Ce qui donne au joueur son idée de la chance, sans lui donner un pourcentage
    nu : la jauge dont dépend l'option, son état, et une barre pleine à hauteur
    de la réussite. Le détail chiffré reste dépliable pour qui veut vérifier. */
-function chanceHTML(o){
+function chanceHTML(o,choisie){
   const {T,rows}=computeThreshold(o);
   const w=bands(T,o.forme);
   const r=Math.round(reussite(w));
@@ -189,7 +232,7 @@ function chanceHTML(o){
       </div>
       <div class="ch-bar"><div class="ch-fill p${cran}" style="width:${r}%"></div></div>
       <div class="ch-mot">Issue <b class="p${cran}">${mots[cran]}</b>
-        <span class="ch-detail" data-d="1">le détail</span></div>
+        ${choisie?`<span class="ch-detail" data-d="1">le détail</span>`:""}</div>
       <div class="ch-rows" hidden><table>${rows.map(x=>
         `<tr><td>${x[0]}</td><td>${x[1]>0?"+":""}${x[1]}</td></tr>`).join("")}
         <tr><td><b>Seuil</b></td><td><b>${T}</b></td></tr></table></div>
@@ -201,14 +244,15 @@ function sEvent(){
   if(!ev){ S.phase="chronicle"; render(); return; }
   if(!S.pending) S.pending={opt:null, rolled:null, ordre:null};
 
+  /* La glose en italique est passée à l'écran de résolution : ici, sous chaque
+     réponse, on montre directement ce dont elle dépend et ce qu'elle vaut. */
   const ordre=ordreOptions(ev);
   const opts=ordre.map(i=>{
     const o=ev.opts[i];
     const choisie=S.pending.opt===i;
     return `<button class="opt ${choisie?"on":""}" data-i="${i}" aria-pressed="${choisie}">
       <span class="opt-label">${o.label}</span>
-      ${o.note?`<span class="opt-note">${o.note}</span>`:""}
-      ${choisie?chanceHTML(o):""}
+      ${chanceHTML(o,choisie)}
     </button>`;
   }).join("");
 
@@ -281,6 +325,7 @@ function sResolve(){
   app().innerHTML=`
   <div style="padding-top:40px"></div>
   <div class="eyebrow">${S.year} · ${ev.t}</div>
+  <div class="res-opt">${o.label}${o.note?`<span class="res-note">${o.note}</span>`:""}</div>
   <div class="bandwrap" style="margin-top:22px">
     <div class="band">${w.map((x,i)=>`<div class="seg b${i}" style="flex:${x.toFixed(2)} 0 0"></div>`).join("")}
       <div class="needle" style="left:${roll}%"></div></div>
@@ -298,6 +343,27 @@ function sResolve(){
   };
 }
 
+
+/* Ce que l'année a fait aux jauges. Comparé au 1er janvier, pas au coup par
+   coup : le joueur voit la somme, qui est ce qui compte. Un mouvement qui ne
+   change pas de palier n'a qu'une flèche, comme à la résolution. */
+function bilanAnneeHTML(){
+  if(!S.gDebut) return "";
+  const lignes=Object.keys(GAUGES).map(k=>{
+    const av=S.gDebut[k], ap=S.g[k], d=ap-av;
+    const pAv=palier(av), pAp=palier(ap);
+    const fl = d===0 ? `<span class="fleche nul">—</span>`
+      : `<span class="fleche ${d>0?"up":"down"}">${d>0?"▲":"▼"}</span>`;
+    const mot = pAv===pAp
+      ? `<span class="ef-mot p${pAp}">${word(k,ap)}</span>`
+      : `<span class="ef-mot"><s>${word(k,av)}</s> <b class="p${pAp}">${word(k,ap)}</b></span>`;
+    return `<div class="ef"><span>${GAUGES[k].n}</span><span>${fl}${mot}</span></div>`;
+  }).join("");
+  return `
+    <div class="rule"></div>
+    <div class="eyebrow">Le royaume au 31 décembre</div>
+    <div class="effects">${lignes}</div>`;
+}
 
 function sChron(){
   const yr=S.chronicle.filter(c=>c.y===S.year);
@@ -322,6 +388,7 @@ function sChron(){
       ${perdusAnnee.map(k=>`<div class="aq lost">
         <div class="aq-n">${EXPLOITS[k].n}</div><div class="aq-d">${(EXPLOITS[k].perte||{}).d||""}</div></div>`).join("")}
     </div>`:""}
+  ${bilanAnneeHTML()}
   <div class="rule-strong"></div>
   <div class="act">
     <button class="btn" id="n">${last?"Clore l'acte premier":"Passer à "+(S.year+1)}</button>
@@ -334,6 +401,7 @@ function sChron(){
     if(last){S.phase="end";render();return}
     S.idx++; S.year=YEARS[S.idx];
     rentrees().forEach(k=>S.chronicle.push({y:S.year,txt:"La paix fut signée avec "+nomGuerre(k)+"."}));
+    S.gDebut={...S.g};
     if(d) S.chronicle.push({y:S.year,txt:"On entra dans l'année en devant "+d+", et les prêteurs le firent savoir."});
     S.phase="budget"; sauver(); render();
   };
