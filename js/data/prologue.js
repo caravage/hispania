@@ -25,7 +25,7 @@ const PROLOGUE = [
    e:{au:8, no:3, co:4}},
   {label:"Reconnaître la primauté du roi pour avoir sans délai l'armée aragonaise.",
    note:"La guerre approche et l'Aragon a des hommes. Le prix se paiera plus tard.",
-   e:{au:5, no:-2, co:-6, t:2, flag:"primaute_aragon"}},
+   e:{au:5, no:-2, co:-6, t:1, flag:"primaute_aragon"}},
   {label:"Faire déclarer la succession par les Cortès elles-mêmes.",
    note:"Fonder le titre sur le consentement plutôt que sur l'hérédité. Personne n'a fait cela.",
    e:{co:12, au:2, no:-5, flag:"titre_consenti"}}
@@ -36,13 +36,13 @@ const PROLOGUE = [
  opts:[
   {label:"Lever un service sur l'argenterie des églises, à charge de remboursement.",
    note:"Trente millions de maravédis dorment dans les sacristies. On jurera de refaire les calices.",
-   e:{t:6, au:4, flag:"dette_eglise"}},
+   e:{t:3, au:4, flag:"dette_eglise"}},
   {label:"S'appuyer sur les milices urbaines et leur laisser la charge des impôts de guerre.",
    note:"Armer les conseils municipaux contre la noblesse. Efficace, et difficile à défaire.",
-   e:{t:4, co:10, no:-8, au:3, flag:"villes_armees"}},
+   e:{t:2, co:10, no:-8, au:3, flag:"villes_armees"}},
   {label:"Emprunter aux maisons génoises sur les revenus à venir.",
    note:"L'argent vient vite. Il repartira cher et pendant longtemps.",
-   e:{t:7, pr:-5, co:-3, flag:"credit_genois"}}
+   e:{t:4, pr:-5, co:-3, flag:"credit_genois"}}
  ]},
 
 {y:1476, t:"Toro, et ce qu'on en fait", place:"Toro puis Madrigal, mars 1476",
@@ -53,7 +53,7 @@ const PROLOGUE = [
    e:{au:10, pr:8, co:5, no:-7, flag:"hermandad"}},
   {label:"Confier la pacification aux grands seigneurs, contre confirmation de leurs domaines.",
    note:"On achète la paix au prix du patrimoine royal. Elle sera immédiate.",
-   e:{no:14, au:4, pr:3, t:-2, flag:"grands_confirmes"}},
+   e:{no:14, au:4, pr:3, t:-1, flag:"grands_confirmes"}},
   {label:"Abolir la juridiction seigneuriale sur les chemins royaux.",
    note:"Substituer des juges nommés aux tribunaux des maisons. Trente ans avant l'heure.",
    e:{au:12, pr:6, co:7, no:-12, flag:"chemins_royaux"}}
