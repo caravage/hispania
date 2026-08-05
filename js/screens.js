@@ -13,7 +13,9 @@ function ledger(){
   const parts=[
     `<span class="yr">${S.year}</span>`,
     `<span>Trésor <b class="coin">${S.tresor}</b></span>`,
-    ...Object.keys(GAUGES).map(k=>`<span>${GAUGES[k].n} <b>${word(k,g[k])}</b></span>`),
+    // title : le rappel à portée de survol, pour ne pas avoir à remonter à l'ouverture.
+    ...Object.keys(GAUGES).map(k=>
+      `<span title="${GAUGES[k].n} — ${GAUGES[k].d}">${GAUGES[k].n} <b>${word(k,g[k])}</b></span>`),
     `<span class="fortune">Fortune ${"◆".repeat(S.fortune)}${"◇".repeat(3-S.fortune)}</span>`
   ];
   document.getElementById("ledger").innerHTML=parts.join("");
@@ -42,6 +44,17 @@ function sIntro(){
     <p class="dropcap">Le trésor royal rapporte moins de la moitié de ce qu'il rapportait il y a trente ans. Les grands seigneurs battent monnaie, rendent la justice et se font la guerre. Les chemins ne sont pas sûrs entre deux villes. Le Portugal soutient une autre prétendante et l'archevêque de Tolède, qui a fait votre mariage, s'apprête à changer de camp.</p>
     <p>Neuf années. Chacune commence par la répartition de l'argent entre six portefeuilles — vous n'aurez jamais de quoi les tenir tous — et se poursuit par deux ou trois situations auxquelles il faut répondre. Chaque réponse se joue aux dés, mais vous choisissez la manière : prudente, équilibrée ou audacieuse. Vous voyez la forme du risque avant de vous décider.</p>
     <p>La voie que l'histoire a réellement suivie est toujours disponible. Elle n'est pas la meilleure. Elle est seulement la plus stable.</p>
+  </div>
+  <div class="rule"></div>
+  <div class="eyebrow">Ce que le bandeau vous dit</div>
+  <div class="glossary">${Object.keys(GAUGES).map(k=>`
+    <div class="gl"><div class="gl-n">${GAUGES[k].n}</div>
+      <div class="gl-d">${GAUGES[k].d}</div>
+      <div class="gl-w">${GAUGES[k].w.join(" · ")}</div></div>`).join("")}
+    <div class="gl"><div class="gl-n">Trésor</div>
+      <div class="gl-d">Le seul chiffre exact du jeu. Il rentre une fois l'an, avant la répartition ; ce qui n'est pas dépensé reste pour les années suivantes.</div></div>
+    <div class="gl"><div class="gl-n">Fortune</div>
+      <div class="gl-d">Trois jetons pour tout le règne. Un jeton relance un jet manqué — seulement un échec, jamais un demi-succès qui déçoit. Ils ne se renouvellent pas.</div></div>
   </div>
   <div class="act"><button class="btn" id="go">Commencer — décembre 1474</button></div>`;
   document.getElementById("go").onclick=()=>{S.phase="budget";S.revenu=revenue();S.tresor+=S.revenu;render()};

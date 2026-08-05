@@ -96,6 +96,18 @@
 .step:focus-visible{outline:2px solid var(--cinnabar);outline-offset:-3px}
 .warn{font-size:16px;color:var(--cinnabar);font-style:italic;margin-top:9px}
 
+/* ---------- légende des jauges (ouverture) ----------
+   Même vocabulaire que les portefeuilles : nom en romaine, glose en italique
+   pâle. La ligne des cinq mots donne l'échelle sans donner le chiffre. */
+.glossary{display:flex;flex-direction:column;gap:15px;margin:6px 0 4px}
+.gl{border-left:2px solid var(--rule-fine);padding-left:15px}
+.gl-n{font-family:var(--util);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink)}
+.gl-d{font-size:16.5px;line-height:1.5;color:var(--ink-soft);margin-top:4px}
+.gl-w{
+  font-family:var(--util);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-faint);margin-top:5px;
+}
+
 /* ---------- action principale ---------- */
 .act{
   margin-top:34px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;

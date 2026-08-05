@@ -16,12 +16,22 @@ const PF = [
   {k:"admin",     n:"Administration",       d:"Secrétaires, lettrés, archives. Réduit l'incertitude partout ailleurs."}
 ];
 
+/* Les cinq jauges. `w` donne les cinq mots, par paliers de vingt : le joueur
+   ne verra jamais le chiffre. `d` dit au joueur à quoi la jauge lui sert —
+   affiché en légende sur l'écran d'ouverture et au survol du bandeau.
+   Chaque jauge sauf le Royaume commande le seuil d'un ou plusieurs
+   portefeuilles ; le Royaume, lui, ne facilite rien et remplit la bourse. */
 const GAUGES = {
-  autorite:  {n:"Autorité",   w:["contestée","fragile","établie","forte","incontestée"]},
-  cortes:    {n:"Cortès",     w:["hostiles","réticentes","attentives","favorables","acquises"]},
-  rome:      {n:"Rome",       w:["rompue","froide","correcte","bonne","excellente"]},
-  prosperite:{n:"Royaume",    w:["ruiné","exsangue","modeste","prospère","florissant"]},
-  noblesse:  {n:"Les grands", w:["en armes","hostiles","méfiants","ralliés","dévoués"]}
+  autorite:  {n:"Autorité",   w:["contestée","fragile","établie","forte","incontestée"],
+    d:"Ce que vos ordres pèsent là où vous n'êtes pas. Elle facilite la justice, la guerre et la diplomatie — trois affaires sur six — et grossit un peu les rentrées."},
+  cortes:    {n:"Cortès",     w:["hostiles","réticentes","attentives","favorables","acquises"],
+    d:"Les villes réunies, qui votent l'impôt. Elles fournissent une bonne part des rentrées et commandent votre administration."},
+  rome:      {n:"Rome",       w:["rompue","froide","correcte","bonne","excellente"],
+    d:"Le pape et sa cour. Ne joue que sur les affaires d'Église, mais là, elle joue seule."},
+  prosperite:{n:"Royaume",    w:["ruiné","exsangue","modeste","prospère","florissant"],
+    d:"L'état matériel du pays : récoltes, chemins, foires. Il ne rend aucune entreprise plus facile — il remplit la bourse, et c'est lui qui la remplit le plus."},
+  noblesse:  {n:"Les grands", w:["en armes","hostiles","méfiants","ralliés","dévoués"],
+    d:"La haute noblesse. Elle ne s'obtient qu'à la Cour, par les offices et les pensions. Une dotation coupée brutalement l'indispose pour longtemps."}
 };
 const word = (k,v) => GAUGES[k].w[Math.max(0,Math.min(4,Math.floor(v/20)))];
 
