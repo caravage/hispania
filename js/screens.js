@@ -108,8 +108,13 @@ function sIntro(){
 
 function sBudget(){
   const spent=budgetCost(S.budget), reste=S.tresor-spent;
-  const plancher=-detteAutorisee();
-  const trop=reste<plancher;
+  /* Ce qu'on interdit, c'est de DÉPENSER au-delà du crédit, pas d'avoir une
+     caisse négative. Comparer le solde à un plancher figeait l'écran quand les
+     soldes de guerre avaient déjà creusé le trésor : même les six portefeuilles
+     à zéro laissaient un reste négatif, et le bouton ne se rallumait jamais.
+     Une répartition à zéro doit toujours être validable. */
+  const dispo=Math.max(0,S.tresor)+detteAutorisee();
+  const trop=spent>dispo;
 
   const rows=PF.map(p=>{
     const lv=S.budget[p.k];
@@ -142,7 +147,7 @@ function sBudget(){
   </div>
   ${reste<0 ? `<div class="warn">La couronne emprunte ${-reste}. Si la dette n'est pas résorbée à la fin de l'année, elle se paiera en autorité et en crédit.</div>` : ""}
   ${reste>=0 && reste<6 ? `<div class="warn">Il reste peu pour les affaires de l'année. Les situations se paient sur cette réserve.</div>` : ""}
-  ${trop ? `<div class="warn">La couronne ne trouvera pas ce crédit. ${S.detteAnnee?"Elle est déjà endettée.":"On ne peut engager plus de "+DETTE_MAX+"."}</div>` : ""}
+  ${trop ? `<div class="warn">La couronne ne trouvera pas ce crédit. ${S.detteAnnee?"Elle est déjà endettée et ne peut plus emprunter.":"On ne peut engager plus de "+DETTE_MAX+" au-delà de la caisse."}</div>` : ""}
   ${rows}
   <div class="act">
     <button class="btn" id="ok" ${trop?"disabled":""}>Arrêter le budget</button>

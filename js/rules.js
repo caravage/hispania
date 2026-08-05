@@ -111,6 +111,9 @@ function rentrees(){
   S.revenu=r.total; S.detailRentes=r;
   S.solde=soldeGuerres();
   S.tresor=S.tresor+S.revenu-S.solde;
+  /* La dette effacée rend le crédit. Sans cela, un seul emprunt interdisait
+     d'emprunter pour le reste du règne, ce qui n'est ni juste ni jouable. */
+  if(S.tresor>=0) S.detteAnnee=false;
   return finies;
 }
 
