@@ -20,7 +20,7 @@ const FICHIERS = ["js/data/config.js","js/data/art.js","js/data/exploits.js","js
 const ctx = vm.createContext({Math, JSON, console, Object, Array, String, Number});
 const src = FICHIERS.map(f => fs.readFileSync(path.join(R, f), "utf8")).join("\n;\n");
 const X = vm.runInContext(src +
-  "\n;({NODES,POOL,INJECTED,ART,EXPLOITS,GUERRES,PF,YEARS,BAND_KEYS,PORT_JAUGE,PROLOGUE,PETITS,GAUGES,JAUGE_CLE,PF_ENTRETIEN,ORDRES_ASSISE,ASSISE_DEPART,partCouronne,stabilite,S,bands,score})",
+  "\n;({NODES,POOL,INJECTED,ART,EXPLOITS,GUERRES,PF,YEARS,BAND_KEYS,PORT_JAUGE,PROLOGUE,PETITS,GAUGES,JAUGE_CLE,PF_ENTRETIEN,ORDRES_ASSISE,ASSISE_DEPART,partCouronne,stabilite,S,bands,score,amortir,mercedes,scoreRegne,RESERVE_COURONNE})",
   ctx, {filename: "bundle.js"});
 
 const err = [], warn = [];
@@ -203,7 +203,8 @@ Object.keys(X.INJECTED).forEach(k => {
   if (!semes.has(k) && k !== "invasion_francaise") warn.push(`semé « ${k} » n'est déclenché par aucune issue`);
 });
 Object.keys(X.GUERRES).forEach(k => {
-  if (!guerresCitees.has(k)) warn.push(`guerre « ${k} » déclarée mais jamais déclenchée`);
+  if (!guerresCitees.has(k) && !X.GUERRES[k].passee)
+    warn.push(`guerre « ${k} » déclarée mais jamais déclenchée`);
 });
 
 // Les cinq largeurs doivent toujours totaliser 100, sinon une bande est perdue.
@@ -213,6 +214,57 @@ Object.keys(X.GUERRES).forEach(k => {
     if (Math.abs(s - 100) > 1e-9) { err.push(`bands(${T}, ${f}) totalise ${s} au lieu de 100`); break; }
   }
 });
+
+/* L'amortissement doit rester un ressort de rappel : un effet ne change jamais
+   de signe, ne s'annule jamais tout à fait, et pèse plus lourd à mesure qu'on
+   s'éloigne du neutre. On le vérifie sur toute l'étendue de la jauge. */
+["autorite","noblesse"].forEach(g => {
+  let dernierGain = Infinity, dernierePerte = 0;
+  for (let v = 0; v <= 100; v += 5) {
+    X.S.g[g] = v;
+    const gain = X.amortir(g, 6), perte = X.amortir(g, -6);
+    if (gain <= 0) err.push(`amortir(${g}@${v}, +6) rend ${gain} : un gain écrit doit rester un gain`);
+    if (perte >= 0) err.push(`amortir(${g}@${v}, -6) rend ${perte} : une perte écrite doit rester une perte`);
+    if (gain > dernierGain) err.push(`amortir : le gain remonte en ${g}@${v}, le rappel ne freine plus`);
+    if (perte > dernierePerte) err.push(`amortir : la perte s'allège en ${g}@${v}, le rappel ne mord plus`);
+    dernierGain = gain; dernierePerte = perte;
+  }
+  /* Le rappel doit exister, pas seulement ne pas s'inverser : en haut de la
+     jauge, monter doit coûter davantage et tomber faire plus mal qu'en bas. */
+  X.S.g[g] = 10; const basGain = X.amortir(g, 6), basPerte = X.amortir(g, -6);
+  X.S.g[g] = 90; const hautGain = X.amortir(g, 6), hautPerte = X.amortir(g, -6);
+  if (hautGain >= basGain) err.push(`amortir : ${g} monte aussi vite à 90 qu'à 10, il n'y a pas de rappel`);
+  if (hautPerte >= basPerte) err.push(`amortir : ${g} tombe aussi peu à 90 qu'à 10, il n'y a pas de rappel`);
+  X.S.g[g] = 50;
+});
+if (X.amortir("autorite", 6) !== 6) err.push("amortir : au neutre, l'effet écrit doit passer tel quel");
+
+/* Les mercedes ne créent pas de terre : la somme reste entière, et la couronne
+   garde toujours sa réserve. */
+{
+  const av = {...X.S.assise};
+  X.ORDRES_ASSISE.forEach(g => X.S.g[g] = 90);          // trois ordres dévoués
+  for (let an = 0; an < 40; an++) X.mercedes();
+  const somme = X.ORDRES_ASSISE.reduce((a, g) => a + X.S.assise[g], 0);
+  if (somme > 100) err.push(`mercedes : les ordres tiennent ${somme} % du royaume`);
+  if (X.partCouronne() < X.RESERVE_COURONNE)
+    err.push(`mercedes : la couronne est descendue à ${X.partCouronne()} %, sous sa réserve`);
+  X.S.assise = av; X.ORDRES_ASSISE.forEach(g => X.S.g[g] = 50);
+}
+
+/* Le compte du règne doit récompenser ce qu'on laisse, pas seulement ce qu'on
+   prend : un royaume dépouillé et hostile ne doit pas battre un royaume tenu. */
+{
+  const mesure = (part, relation) => {
+    X.ORDRES_ASSISE.forEach((g, i) => { X.S.assise[g] = part / 3; X.S.g[g] = relation; });
+    return X.scoreRegne().reduce((a, l) => a + l.vp, 0);
+  };
+  const depouille = mesure(15, 10);    // tout repris, tout le monde en rupture
+  const tenu      = mesure(45, 70);    // moins repris, ordres ralliés
+  if (depouille > tenu)
+    err.push(`royaume légué : dépouiller rapporte ${depouille} contre ${tenu} à tenir le royaume`);
+  X.S.assise = {...X.ASSISE_DEPART}; X.ORDRES_ASSISE.forEach(g => X.S.g[g] = 50);
+}
 
 // req() doit s'exécuter sans lever sur un état de départ.
 tous.forEach(([ou, e]) => {

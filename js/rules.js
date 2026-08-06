@@ -190,6 +190,30 @@ function deriveRoyaume(){
   return Math.round((moy-S.g.prosperite)/5) - USURE_ROYAUME;
 }
 
+/* Ce qu'une dotation obtient réellement. Deux freins s'y ajoutent au barème.
+
+   Le premier est l'essoufflement : entretenir une relation déjà excellente ne
+   l'améliore presque plus, alors que la laisser tomber coûte toujours autant.
+
+   Le second est le poids. Un ordre qui tient la moitié du royaume a plus de
+   monde à satisfaire : la même somme y achète moins, et l'abandon s'y paie
+   plus cher. Un ordre réduit à peu de chose se contente de peu. C'est ce qui
+   relie les deux axes : reprendre son assise à la noblesse n'est pas
+   seulement lui prendre ses rentes, c'est rendre sa faveur abordable. La
+   couronne obéit à la même règle, mesurée sur sa propre part : plus le
+   domaine s'étend, plus il coûte à gouverner. */
+const POIDS_REF = 25;
+function poidsEntretien(pk){
+  if(pk==="france") return 1;
+  const part = pk==="autorite" ? partCouronne() : S.assise[pk];
+  return clamp(part,8,60)/POIDS_REF;
+}
+function effetDotation(pk, lv){
+  const g=PF_ENTRETIEN[pk], p=poidsEntretien(pk);
+  const d=derive(lv===undefined?S.budget[pk]:lv);
+  return d>0 ? Math.round(d*(100-S.g[g])/100/p) : Math.round(d*p);
+}
+
 function entretenirOrdres(){
   const out=[];
 
@@ -213,36 +237,7 @@ function entretenirOrdres(){
 
   Object.keys(PF_ENTRETIEN).forEach(pk=>{
     const g=PF_ENTRETIEN[pk];
-    S.g[g]=clamp(S.g[g]-USURE,0,100);
-  });
-  {
-    const d=deriveRoyaume();
-    if(d!==0){
-      const av=S.g.prosperite;
-      S.g.prosperite=clamp(av+d,0,100);
-      if(S.g.prosperite!==av) out.push({g:"prosperite", n:GAUGES.prosperite.n,
-        pf: d>0?"Le royaume suit l'état général":"Usure des chemins, des greniers et des foires",
-        cran:"sans dotation", d, av, ap:S.g.prosperite});
-    }
-  }
-  {
-    const d=deriveRoyaume();
-    if(d!==0){
-      const av=S.g.prosperite;
-      S.g.prosperite=clamp(av+d,0,100);
-      if(S.g.prosperite!==av) out.push({g:"prosperite", n:GAUGES.prosperite.n,
-        pf: d>0?"Le royaume suit l'état général":"Usure des chemins, des greniers et des foires",
-        cran:"sans dotation", d, av, ap:S.g.prosperite});
-    }
-  }
-  Object.keys(PF_ENTRETIEN).forEach(pk=>{
-    const g=PF_ENTRETIEN[pk];
-    let d=derive(S.budget[pk]);
-    /* L'entretien s'essouffle à mesure qu'on monte : entretenir une relation
-       déjà excellente ne l'améliore presque plus, alors que la laisser tomber
-       coûte toujours autant. Sans cela, une ligne financée poussait sa jauge à
-       cent en quelques années et l'y maintenait — plus rien à piloter. */
-    if(d>0) d=Math.round(d*(100-S.g[g])/100);
+    const d=effetDotation(pk);
     if(!d) return;
     const av=S.g[g];
     S.g[g]=clamp(av+d,0,100);
@@ -290,9 +285,31 @@ function rentes(){
   return {total, lignes, reformes};
 }
 
+/* Les mercedes. On ne gouverne pas seulement avec de l'argent : un ordre qu'on
+   ménage finit par obtenir des terres, des offices, des évêchés, et s'agrandit
+   d'autant. La faveur a donc un prix qui n'est pas seulement fiscal, et la
+   couronne ne peut pas à la fois tout tenir et avoir tout le monde pour elle —
+   sans quoi elle absorbait le royaume entier avant 1487.
+
+   Rien ne descend ici. Un ordre hostile garde ce qu'il tient : lui reprendre
+   son assise doit rester une décision, prise dans une situation et payée. Le
+   faire tomber tout seul revenait à désarmer la menace de rupture au moment
+   même où elle se formait, et plus aucun règne ne tombait. */
+const MERCEDES = 1;
+const RESERVE_COURONNE = 10;   // ce que la couronne ne cède jamais
+function mercedes(){
+  const mv={};
+  let libre=Math.max(0, partCouronne()-RESERVE_COURONNE);
+  ORDRES_ASSISE.forEach(g=>{
+    if(palier(S.g[g])>=3 && libre>=MERCEDES){ mv[g]=MERCEDES; libre-=MERCEDES; }
+  });
+  return deplacerAssise(mv);
+}
+
 function rentrees(){
   const finies=guerresEchues();
   S.entretien=entretenirOrdres();
+  S.mercedes=mercedes();
   const r=rentes();
   S.revenu=r.total; S.detailRentes=r;
   S.solde=soldeGuerres();
@@ -310,7 +327,12 @@ const GUERRES = {
   grenade:{n:"la guerre de Grenade", solde:4, evts:1,
     d:"La frontière du sud est ouverte et ne se refermera pas seule."},
   france:{n:"la guerre de France", solde:5, evts:1,
-    d:"La France a passé les Pyrénées."}
+    d:"La France a passé les Pyrénées."},
+  /* Déjà conclue au premier janvier 1479, par Alcáçovas. Elle ne figure ici
+     que pour porter son nom au bilan du règne, où elle est comptée parmi les
+     paix. Rien ne la déclenche : voilà pourquoi elle est dite passée. */
+  portugal:{n:"la guerre de Succession", solde:0, evts:0, passee:true,
+    d:"La couronne de Castille disputée les armes à la main, et gagnée."}
 };
 const nomGuerre = k => GUERRES[k] ? GUERRES[k].n : k;
 const enGuerre = () => Object.keys(S.guerres);
@@ -365,6 +387,19 @@ function menaceFrance(){
 const JAUGE_CLE = {au:"autorite", no:"noblesse", cl:"clerge",
                    pr:"prosperite", co:"cortes", fr:"france"};
 
+/* L'amortissement. Une jauge haute résiste au progrès et cède au revers ; une
+   jauge basse se relève plus vite qu'elle ne tombe. Sans ce ressort, une jauge
+   qui monte tire de meilleures bandes, donc l'emporte plus souvent, donc monte
+   encore : le Pouvoir gagnait quatre-vingts points par règne et la partie se
+   décidait dans ses trois premières années. Le point neutre est cinquante, où
+   l'effet écrit s'applique tel quel. */
+const NEUTRE = 50;
+function amortir(g, v){
+  const f = v>0 ? (100-S.g[g])/NEUTRE : S.g[g]/NEUTRE;
+  const a = Math.round(v*f);
+  return a || Math.sign(v);   // un effet écrit ne s'annule jamais tout à fait
+}
+
 function apply(e){
   const out=[];
   if(e.t){ S.tresor+=e.t; out.push({type:"tresor", n:"Trésor", v:e.t}); }
@@ -372,7 +407,7 @@ function apply(e){
   Object.keys(JAUGE_CLE).forEach(k=>{
     if(!e[k]) return;
     const g=JAUGE_CLE[k], av=S.g[g];
-    S.g[g]=clamp(av+e[k],0,100);
+    S.g[g]=clamp(av+amortir(g,e[k]),0,100);
     out.push({type:"jauge", g, n:GAUGES[g].n, av, ap:S.g[g],
       palAv:palier(av), palAp:palier(S.g[g]),
       motAv:word(g,av), motAp:word(g,S.g[g]), sens:Math.sign(e[k])});
@@ -440,6 +475,24 @@ function undo(eff,e){
 /* Ce que vaut le règne. Uniquement les exploits : il n'y a plus de points de
    conduite courante, qui récompensaient le fait de jouer plutôt que le fait
    de réussir quelque chose de notable. */
+/* Ce que vaut le royaume légué. Les exploits disent ce qu'on a fait ; ceci dit
+   dans quel état on le laisse. Sans cette part, on avait intérêt à dépouiller
+   les ordres et à s'en aller : la couronne ramassait toute la tarte et rien ne
+   comptait ce qu'elle laissait derrière elle. Les deux lignes tirent en sens
+   contraire — la part se prend aux ordres, et les ordres dépouillés vous
+   haïssent — ce qui est exactement l'arbitrage du règne. */
+function scoreRegne(){
+  const l=[];
+  const d=partCouronne()-COURONNE_DEPART;
+  if(d) l.push({n:"La part de la couronne",
+    d:`${partCouronne()} % du royaume, contre ${COURONNE_DEPART} % en 1479`, vp:d});
+  ORDRES_ASSISE.forEach(g=>{
+    const vp=[-12,-6,0,6,12][palier(S.g[g])];
+    if(vp) l.push({n:GAUGES[g].n, d:`${word(g,S.g[g])} au terme du règne`, vp});
+  });
+  return l;
+}
+
 function score(){
   const lignes=[];
   let total=0;
@@ -453,5 +506,7 @@ function score(){
     total+=p.vp;
   });
   lignes.sort((a,b)=>b.vp-a.vp);
-  return {total, lignes};
+  const regne=scoreRegne();
+  regne.forEach(l=>total+=l.vp);
+  return {total, lignes, regne};
 }

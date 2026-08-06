@@ -181,7 +181,8 @@ function sIntro(){
    plus sèche que le reste, et l'état du royaume montré après chaque choix. */
 function sPrologue(){
   const p=PROLOGUE[S.pro_i];
-  if(!p){ S.phase="budget"; S.gDebut={...S.g}; rentrees(); sauver(); render(); return; }
+  if(!p){ S.phase="budget"; S.gDebut={...S.g}; S.couronneDebut=partCouronne();
+          rentrees(); sauver(); render(); return; }
 
   app().innerHTML=`
   <div style="padding-top:40px"></div>
@@ -235,7 +236,7 @@ function sBudget(){
         <span class="pf-cost">${STEP_COST[lv]} ${MONNAIE}</span></div>
       <div class="pf-desc">${p.d}</div>
       <div class="steps">${STEPS.map((st,i)=>{
-        const g=derive(i);
+        const g=effetDotation(p.k,i);
         return `<button class="step" data-k="${p.k}" data-i="${i}" aria-pressed="${i===lv}">
           <span class="st-n">${st}</span>
           <span class="st-c">${STEP_COST[i]}</span>
@@ -533,12 +534,22 @@ function bilanAnneeHTML(){
       <b class="ef-d ${d>0?"pos":d<0?"neg":""}">${d>0?"+":""}${d||"—"}</b>
       <b class="ef-nb" data-de="${av}" data-a="${ap}">${av}</b></span></div>`;
   }).join("");
+  /* Le partage du royaume bouge lentement et se lit mal d'une année sur
+     l'autre ; on le met ici, à côté des jauges, parce que c'est la grandeur
+     qui décide des rentes et de ce qu'un ordre peut oser. */
+  const cAv=S.couronneDebut===undefined?partCouronne():S.couronneDebut, cAp=partCouronne(), dc=cAp-cAv;
+  const flc = dc===0 ? `<span class="fleche nul">—</span>`
+    : `<span class="fleche ${dc>0?"up":"down"}">${dc>0?"▲":"▼"}</span>`;
   return `
     <div class="rule"></div>
     <div class="eyebrow">Le royaume au 31 décembre</div>
     <div class="effects">${lignes}
       <div class="ef stab-ligne"><span>Stabilité</span><span><b class="p${palier(stabilite())}">${motStabilite()}</b>
-        <b class="ef-nb" data-de="${stabilite()}" data-a="${stabilite()}">${stabilite()}</b></span></div></div>`;
+        <b class="ef-nb" data-de="${stabilite()}" data-a="${stabilite()}">${stabilite()}</b></span></div>
+      <div class="ef stab-ligne"><span>Part de la couronne</span><span>${flc}
+        <span class="ef-mot">${motCouronne()}</span>
+        <b class="ef-d ${dc>0?"pos":dc<0?"neg":""}">${dc>0?"+":""}${dc||"—"}</b>
+        <b class="ef-nb" data-de="${cAv}" data-a="${cAp}">${cAv}</b></span></div></div>`;
 }
 
 function sChron(){
@@ -589,8 +600,11 @@ function sChron(){
     } else S.sursis=false;
     if(last){S.phase="end";render();return}
     S.idx++; S.year=YEARS[S.idx];
+    /* Le relevé du 1er janvier est pris avant les rentrées, pour que le bilan
+       de l'année contienne l'entretien et les mercedes : c'est ce qui rend le
+       budget lisible, puisqu'on y voit ce qu'il a acheté. */
+    S.gDebut={...S.g}; S.couronneDebut=partCouronne();
     rentrees().forEach(k=>S.chronicle.push({y:S.year,txt:"La paix fut signée avec "+nomGuerre(k)+"."}));
-    S.gDebut={...S.g};
     if(d) S.chronicle.push({y:S.year,txt:"On entra dans l'année en devant "+d+", et les prêteurs le firent savoir."});
     S.phase="budget"; sauver(); render();
   };
@@ -625,17 +639,18 @@ function sArchives(){
 
 function sEnd(){
   const etat=k=>word(k,S.g[k]);
-  const {total,lignes}=score();
+  const {total,lignes,regne}=score();
   const chute = S.fin==="rupture";   // déclaré avant le jugement, qui s'en sert
-  /* Seuils calibrés sur la distribution mesurée : dix parties jouées au hasard
-     donnent 95 à 195 points, médiane 148. Un joueur qui choisit vaut mieux que
-     le hasard, d'où des paliers un peu au-dessus. */
+  /* Seuils calibrés sur la distribution mesurée : trente-deux parties jouées
+     par machine donnent 59 à 352 points, médiane 225. Une répartition du budget
+     raisonnée en vaut trente de plus qu'un tirage au sort, ce qui fixe l'écart
+     entre un règne solide et un grand règne. */
   const jugement =
-      chute      ?"Ce qui avait été fait ne comptera pas : personne ne resta pour le tenir."
-    : total>=230?"Un règne dont on parlera tant qu'il y aura des chroniques."
-    : total>=180?"Un grand règne. Le royaume légué ne ressemble pas à celui qu'on a reçu."
-    : total>=130?"Un règne solide. Ce qui a été fait tiendra."
-    : total>=80 ?"Un règne qui aura tenu, ce qui n'était pas acquis en 1479."
+      chute     ?"Ce qui avait été fait ne comptera pas : personne ne resta pour le tenir."
+    : total>=320?"Un règne dont on parlera tant qu'il y aura des chroniques."
+    : total>=250?"Un grand règne. Le royaume légué ne ressemble pas à celui qu'on a reçu."
+    : total>=190?"Un règne solide. Ce qui a été fait tiendra."
+    : total>=120?"Un règne qui aura tenu, ce qui n'était pas acquis en 1479."
     : total>=0  ?"Un règne qui aura duré. C'est tout ce qu'on en dira."
     :            "Un règne dont l'héritier devra réparer les décisions.";
 
@@ -661,6 +676,14 @@ function sEnd(){
         <div class="vp-d">${l.d}</div></div>
       <div class="vp-p">${l.vp>0?"+":""}${l.vp}</div>
     </div>`).join("")}</div>`:`<div class="body"><p>Le règne n'a rien fixé de durable.</p></div>`}
+  ${regne.length?`
+    <div class="rule"></div>
+    <div class="eyebrow">Le royaume légué</div>
+    <div class="tally-vp">${regne.map(l=>`
+      <div class="vp-row${l.vp<0?" bad":""}">
+        <div><div class="vp-n">${l.n}</div><div class="vp-d">${l.d}</div></div>
+        <div class="vp-p">${l.vp>0?"+":""}${l.vp}</div>
+      </div>`).join("")}</div>`:""}
   <div class="rule"></div>
   <div class="eyebrow">La chronique du règne</div>
   <div class="chron">${S.chronicle.map(c=>

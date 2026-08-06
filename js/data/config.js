@@ -110,6 +110,7 @@ const PORT_JAUGE = Object.fromEntries(PF.map(p=>[p.k,p.k]));
    Départ de 1479 : Henri IV a distribué plus de la moitié du revenu royal. La
    couronne ne tient qu'un quart de son propre royaume. */
 const ASSISE_DEPART = { noblesse:40, clerge:20, cortes:15 };   // couronne : 25
+const COURONNE_DEPART = 100 - Object.values(ASSISE_DEPART).reduce((a,v)=>a+v,0);
 const ORDRES_ASSISE = ["noblesse","clerge","cortes"];
 
 /* Ce qu'un ordre verse dépend de ce qu'il tient ET de ce qu'il pense de vous :

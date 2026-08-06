@@ -20,12 +20,14 @@ const S = {
   sursis:false,       // la rupture générale a été constatée une fois
   fin:null,           // motif de fin anticipée
   entretien:[],       // ce que les dotations ont entretenu cette année
+  mercedes:[],        // les terres et offices passés d'une main à l'autre
   /* Ce que chaque ordre tient du royaume. La couronne a le reste :
      partCouronne() = 100 − la somme. */
   assise:{...ASSISE_DEPART},
   assiseDebut:null,   // pour montrer la progression du règne
 
   gDebut:null,         // les jauges au 1er janvier, pour le bilan de fin d'année
+  couronneDebut:25,    // la part de la couronne au 1er janvier, même usage
 
   budget:{autorite:2, france:1, noblesse:1, clerge:1, cortes:1},
   lastBudget:null,
