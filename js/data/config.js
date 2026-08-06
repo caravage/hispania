@@ -93,6 +93,38 @@ const permanentes = () => Object.keys(GAUGES).filter(k=>GAUGES[k].gr!=="dehors")
    ligne financée fait monter sa jauge quoi qu'il arrive, même au plus bas. */
 const PORT_JAUGE = Object.fromEntries(PF.map(p=>[p.k,p.k]));
 
+/* ---------- l'assise ----------
+   Nos jauges ne disaient qu'une chose : est-ce que l'ordre vous suit. Elles ne
+   disaient pas ce qu'il TIENT. Or ce qui monte réellement entre 1479 et 1492
+   n'est pas l'affection des ordres — c'est la part du royaume que la couronne
+   reprend : la Déclaratoire sur les rentes aliénées, les maîtrises militaires,
+   les corregidores dans les villes. Aucune de ces choses n'a rendu personne
+   plus loyal ; elles ont déplacé du pouvoir.
+
+   Une seule tarte : couronne + noblesse + clergé + bourgeoisie = 100. On ne
+   peut donc pas gagner de l'assise sans la prendre à quelqu'un — la
+   contrepartie devient structurelle au lieu d'être à écrire dans chaque issue.
+
+   La relation reste libre : c'est du sentiment, ça ne se conserve pas.
+
+   Départ de 1479 : Henri IV a distribué plus de la moitié du revenu royal. La
+   couronne ne tient qu'un quart de son propre royaume. */
+const ASSISE_DEPART = { noblesse:40, clerge:20, cortes:15 };   // couronne : 25
+const ORDRES_ASSISE = ["noblesse","clerge","cortes"];
+
+/* Ce qu'un ordre verse dépend de ce qu'il tient ET de ce qu'il pense de vous :
+   un ordre puissant et rallié paie, un ordre puissant et hostile garde tout.
+   Réduire son assise réduit donc ce qu'il vous donne — c'est ce qui fait de la
+   Déclaratoire un vrai pari et non une évidence. */
+const RENDEMENT_ORDRE = 0.18;
+const RENDEMENT_COURONNE = 0.15;   // la part de la couronne, son domaine propre
+const RENDEMENT_PAYS = 0.09;       // l'alcabala, qui suit l'état du royaume
+
+/* Le danger n'est pas « un ordre trop haut » : une noblesse dévouée n'est pas
+   dangereuse. C'est une assise forte avec une relation au plus bas — un ordre
+   qui a les moyens de se retourner et la raison de le faire. */
+const ASSISE_MENACANTE = 30;
+
 /* Ce que chaque ordre rend, et qui n'est pas la même chose :
      Noblesse    — la hueste sert à ses frais : elle allège la solde de guerre.
      Bourgeoisie — le servicio et les douanes : de l'argent ordinaire.
@@ -116,32 +148,6 @@ const ENTRETIEN_PAR_MARAVEDI = 0.5;
 const ABANDON = -3;
 const derive = lvl => lvl===0 ? ABANDON : Math.max(1,Math.round(STEP_COST[lvl]*ENTRETIEN_PAR_MARAVEDI));
 const DERIVE = STEPS.map((_,i)=>derive(i));   // [-3, +1, +2, +3, +5]
-
-/* D'où vient l'argent, et c'est tout : chaque jauge verse une part d'elle-même
-   au trésor, une fois l'an. Les noms d'époque (alcabala, almojarifazgo…)
-   étaient décoratifs et n'apparaissaient nulle part ailleurs dans le jeu ; ce
-   qui compte est de voir que laisser tomber la Bourgeoisie coûte cinq par an. */
-const RENTES = [
-  {g:"prosperite", part:0.095},
-  {g:"cortes",     part:0.075},
-  {g:"autorite",   part:0.045},
-  {g:"clerge",     part:0.030}
-];
-/* La croisade : le clergé verse davantage tant qu'on fait la guerre. */
-const RENTE_CROISADE = 0.055;
-/* Ce qui rentre sans dépendre de personne, et qui croît lentement. */
-const renteFixe = idx => 2 + idx*0.35;
-
-/* ---------- centralisation ----------
-   Ce qu'on donne à ses propres organes — justice, armée, ambassades — bâtit
-   l'appareil royal. Ce qu'on donne aux ordres achète leur fidélité mais laisse
-   le pouvoir chez eux. La différence des deux fait monter ou descendre le
-   Pouvoir chaque année : c'est le seul endroit du jeu où la forme du budget
-   compte autant que son montant. */
-const LIGNES_COURONNE = ["autorite","france"];
-const LIGNES_ORDRES   = ["noblesse","clerge","cortes"];
-const CENTRALISATION_DIVISEUR = 3;
-const CENTRALISATION_MAX = 5;
 
 const BAND_NAMES = ["Échec grave","Échec","Demi-succès","Succès","Triomphe"];
 const BAND_KEYS  = ["crit","fail","part","succ","tri"];

@@ -20,7 +20,7 @@ const FICHIERS = ["js/data/config.js","js/data/art.js","js/data/exploits.js","js
 const ctx = vm.createContext({Math, JSON, console, Object, Array, String, Number});
 const src = FICHIERS.map(f => fs.readFileSync(path.join(R, f), "utf8")).join("\n;\n");
 const X = vm.runInContext(src +
-  "\n;({NODES,POOL,INJECTED,ART,EXPLOITS,GUERRES,PF,YEARS,BAND_KEYS,PORT_JAUGE,PROLOGUE,PETITS,GAUGES,RENTES,JAUGE_CLE,PF_ENTRETIEN,stabilite,S,bands,score})",
+  "\n;({NODES,POOL,INJECTED,ART,EXPLOITS,GUERRES,PF,YEARS,BAND_KEYS,PORT_JAUGE,PROLOGUE,PETITS,GAUGES,JAUGE_CLE,PF_ENTRETIEN,ORDRES_ASSISE,ASSISE_DEPART,partCouronne,stabilite,S,bands,score})",
   ctx, {filename: "bundle.js"});
 
 const err = [], warn = [];
@@ -75,6 +75,28 @@ for (const [ou, e] of tous) {
   });
 }
 
+/* L'assise : une seule tarte. La somme des trois ordres ne peut pas dépasser
+   cent, sinon la couronne ne tient plus rien. */
+{
+  const somme = X.ORDRES_ASSISE.reduce((a,g)=>a+X.ASSISE_DEPART[g],0);
+  if (somme >= 100) err.push(`ASSISE_DEPART totalise ${somme} : il ne reste rien à la couronne`);
+  X.ORDRES_ASSISE.forEach(g => {
+    if (!X.GAUGES[g]) err.push(`ORDRES_ASSISE cite la jauge inconnue « ${g} »`);
+    if (X.ASSISE_DEPART[g] === undefined) err.push(`« ${g} » n'a pas d'assise de départ`);
+  });
+  // Un exploit qui déplace de l'assise doit nommer des ordres réels.
+  Object.entries(X.EXPLOITS).forEach(([k, e]) => {
+    if (!e.as) return;
+    Object.keys(e.as).forEach(c => {
+      if (c !== "couronne" && !X.ORDRES_ASSISE.includes(c))
+        err.push(`exploit « ${k} » déplace l'assise de « ${c} », qui n'est pas un ordre`);
+    });
+  });
+  const sansAssise = Object.keys(X.EXPLOITS).filter(k => !X.EXPLOITS[k].as);
+  if (sansAssise.length)
+    warn.push(`${sansAssise.length} exploit(s) ne déplacent aucun pouvoir : ${sansAssise.slice(0,6).join(", ")}${sansAssise.length>6?"…":""}`);
+}
+
 // Chaque portefeuille doit avoir sa jauge, et chaque jauge servir à quelque chose.
 Object.values(X.PORT_JAUGE).forEach(g => { if (!X.GAUGES[g]) err.push(`PORT_JAUGE pointe vers la jauge inconnue « ${g} »`); });
 Object.keys(X.GAUGES).forEach(g => {
@@ -83,7 +105,7 @@ Object.keys(X.GAUGES).forEach(g => {
      un portefeuille : la noblesse allège la solde de guerre, le clergé lève la
      croisade, et les trois ordres font la stabilité. */
   const commande = Object.values(X.PORT_JAUGE).includes(g);
-  const rapporte = X.RENTES.some(r => r.g === g);
+  const rapporte = X.ORDRES_ASSISE.includes(g) || ["prosperite"].includes(g);
   const ordre = X.GAUGES[g].gr === "ordres";
   if (!commande && !rapporte && !ordre) warn.push(`la jauge « ${g} » ne sert à rien : ni seuil, ni rente, ni stabilité`);
   if (!X.GAUGES[g].w || X.GAUGES[g].w.length !== 5) err.push(`la jauge « ${g} » n'a pas cinq mots`);

@@ -52,6 +52,8 @@ function ledger(){
     <div class="lg-top">
       <span class="yr">${annee}</span>
       <span class="lg-tresor ${S.tresor<0?"dette":""}">Trésor <b>${S.tresor}</b></span>
+      <span class="lg-couronne" title="La part du royaume que la couronne tient en propre. Les trois ordres se partagent le reste. C'est la seule mesure qui monte vraiment sur neuf ans : reprendre ce qui a été donné, voilà le règne.">
+        Couronne <b>${partCouronne()} %</b> <span class="lg-cm">${motCouronne()}</span></span>
       <span class="lg-boutons">
         ${S.archives.length?`<button class="lg-ico" id="arch" title="Les archives du règne" aria-label="Les archives du règne">▤</button>`:""}
         <button class="lg-ico" id="aide" title="Que veut dire tout ceci ?" aria-label="Légende" aria-expanded="${legendeOuverte}">?</button>
@@ -70,10 +72,17 @@ function ledger(){
    coup d'œil. La barre porte la couleur du palier. */
 function jaugeHTML(k){
   const v=S.g[k], p=palier(v);
-  return `<span class="lg-j" title="${GAUGES[k].n} — ${GAUGES[k].d.replace(/"/g,"&quot;")}">
+  /* Deux choses par ordre, et il faut les distinguer : la relation — est-ce
+     qu'il vous suit — et l'assise — ce qu'il tient du royaume. Un ordre faible
+     peut vous détester sans conséquence ; un ordre puissant, non. */
+  const a=S.assise[k];
+  const menace=a!==undefined && a>=ASSISE_MENACANTE && p===0;
+  const titre=`${GAUGES[k].n} — ${GAUGES[k].d.replace(/"/g,"&quot;")}`+
+    (a!==undefined?` · Tient ${a} % du royaume.`:"");
+  return `<span class="lg-j ${menace?"menace":""}" title="${titre}">
     <span class="lg-jn">${GAUGES[k].n}</span>
     <span class="jauge"><span class="jauge-fill p${p}" style="width:${v}%"></span></span>
-    <b class="p${p}">${word(k,v)}</b></span>`;
+    <b class="p${p}">${word(k,v)}</b>${a!==undefined?`<span class="lg-as">${a} %</span>`:""}</span>`;
 }
 
 function legendeHTML(){
@@ -234,20 +243,21 @@ function sBudget(){
       ${warn}</div>`;
   };
 
-  const c=centralisation();
   const rows=BLOCS.map(b=>{
-    const tot=totalBloc(b.k);
+    const tot=PF.filter(p=>p.bloc===b.k).reduce((a,p)=>a+STEP_COST[S.budget[p.k]],0);
     return `<div class="bloc ${b.k}">
       <div class="bloc-head"><span class="bloc-n">${b.n}</span><span class="bloc-t">${tot}</span></div>
       <div class="bloc-d">${b.d}</div>
       ${PF.filter(p=>p.bloc===b.k).map(ligneHTML).join("")}
     </div>`;
   }).join("") + `
-    <div class="centralisation ${c.d>0?"vers-roi":c.d<0?"vers-ordres":""}">
-      <span>${c.couronne} à l'appareil · ${c.ordres} aux ordres</span>
-      <span>${c.d===0?"Le pouvoir ne bouge pas."
-        : c.d>0?`Le pouvoir se concentre — <b>Pouvoir +${c.d}</b> à la fin de l'année.`
-              :`Le pouvoir se disperse — <b>Pouvoir ${c.d}</b> à la fin de l'année.`}</span>
+    <div class="partage">
+      <span>Le partage du royaume</span>
+      <span class="pt-barre">
+        <span class="pt-seg couronne" style="flex:${partCouronne()}">${partCouronne()} %</span>
+        ${ORDRES_ASSISE.map(g=>`<span class="pt-seg ${g}" style="flex:${S.assise[g]}" title="${GAUGES[g].n} : ${S.assise[g]} % du royaume">${S.assise[g]>=9?GAUGES[g].n.slice(0,4):""}</span>`).join("")}
+      </span>
+      <span class="pt-note">La couronne tient ${partCouronne()} % — ${motCouronne()}. Le reste appartient aux ordres, et ne se reprend qu'en le leur retirant.</span>
     </div>`;
 
   const d=S.detailRentes||{lignes:[],reformes:[]};
@@ -262,13 +272,12 @@ function sBudget(){
 
   <details class="rentes" open><summary>Le compte de l'année, en ${MONNAIE_LONG}</summary>
     <table>
-      <tr class="sec"><td>Le pays</td><td></td></tr>
-      ${d.lignes.filter(l=>l.g==="prosperite"||l.g==="autorite").map(l=>
-        `<tr><td>${l.n}</td><td>+${l.v}</td></tr>`).join("")}
-      <tr><td>Domaine royal <span class="prov">permanent, croît avec le règne</span></td><td>+${(d.lignes.find(l=>!l.g)||{v:0}).v}</td></tr>
-      <tr class="sec"><td>Les trois ordres</td><td></td></tr>
-      ${d.lignes.filter(l=>["noblesse","clerge","cortes"].includes(l.g)).map(l=>
-        `<tr><td>${l.n}${l.croisade?` <span class="prov">bulle de croisade comprise</span>`:""}</td><td>+${l.v}</td></tr>`).join("")}
+      <tr class="sec"><td>Ce que la couronne tient en propre</td><td></td></tr>
+      ${d.lignes.filter(l=>["couronne","pays"].includes(l.k)).map(l=>
+        `<tr><td>${l.n} <span class="prov">${l.detail}</span></td><td>+${l.v}</td></tr>`).join("")}
+      <tr class="sec"><td>Ce que les ordres consentent</td><td></td></tr>
+      ${d.lignes.filter(l=>ORDRES_ASSISE.includes(l.k)).map(l=>
+        `<tr><td>${l.n} <span class="prov">${l.detail}${l.croisade?" · croisade":""}</span></td><td>+${l.v}</td></tr>`).join("")}
       ${allegementHueste()?`<tr><td>La hueste sert à ses frais <span class="prov">Noblesse</span></td><td>+${allegementHueste()}</td></tr>`:""}
       ${d.reformes.length?`<tr class="sec"><td>Réformes acquises</td><td></td></tr>
       ${d.reformes.map(r=>`<tr><td>${r.n} <span class="prov">acquis durable du règne</span></td><td>+${r.v}</td></tr>`).join("")}`:""}
@@ -438,6 +447,12 @@ function effetHTML(e){
     return `<div class="ef"><span>${e.n}</span><span>${seuil}
       <b class="ef-d ${monte?"pos":"neg"}">${monte?"+":""}${d}</b></span></div>`;
   }
+  if(e.type==="assise"){
+    const d=e.ap-e.av, pris=d<0;
+    return `<div class="ef assise"><span>${e.n} <span class="prov">part du royaume</span></span>
+      <span><b class="ef-d ${pris?"pos":"neg"}">${d>0?"+":""}${d} %</b>
+      <span class="ef-seuil">${pris?"repris par la couronne":"concédé"}</span></span></div>`;
+  }
   if(e.type==="exploit") return `<div class="ef marque ${e.mauvais?"neg":""}"><span>${e.mauvais?"Échec durable":"Ce que le règne retiendra"}</span><span>${e.n}</span></div>`;
   if(e.type==="perte")   return `<div class="ef marque neg"><span>Repris</span><span>${e.n}</span></div>`;
   if(e.type==="guerre")  return `<div class="ef marque neg"><span>Entrée en guerre</span><span>${e.n}</span></div>`;
@@ -537,11 +552,12 @@ function sChron(){
   <div class="eyebrow">Chronique · année ${S.year}</div>
   <h2>Ce que l'on retiendra</h2>
   ${ruptureGenerale()?`<div class="rupture">
-    <b>${S.sursis?"Dernière année.":"Les trois ordres sont en rupture."}</b>
-    ${S.sursis
-      ? "La noblesse, les villes et l'Église ont rompu deux années de suite. Si l'année qui vient ne les ramène pas, le règne s'arrête là."
-      : "Il ne reste personne pour gouverner avec. Vous avez un an pour en ramener un — la répartition est le seul levier qui agisse assez vite."}
-    </div>`:ordresEnRupture().length===2?`<div class="warn">Deux ordres sur trois sont en rupture : ${ordresEnRupture().map(g=>GAUGES[g].n).join(" et ")}. Si le troisième tombe, le règne est en sursis.</div>`:""}
+    <b>${S.sursis?"Dernière année.":"Un ordre a les moyens de se retourner."}</b>
+    ${(()=>{const m=ordresMenacants().map(g=>`${GAUGES[g].n} tient ${S.assise[g]} % du royaume et vous est ${word(g,S.g[g])}`).join(" ; ");
+      return S.sursis
+        ? `${m}. Cela dure depuis deux ans. Si rien ne change, le règne s'arrête là.`
+        : `${m}. Deux moyens de l'écarter : regagner sa relation, ou lui reprendre son assise. Vous avez un an.`;})()}
+    </div>`:""}
   <div class="rule"></div>
   <div class="chron">${yr.length?yr.map((c,i)=>
     `<div class="entry"><p${i===0?' class="dropcap"':''}>${c.txt}</p></div>`).join("")

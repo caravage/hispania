@@ -12,6 +12,61 @@
 
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 
+/* ---------- l'assise ----------
+   La part de la couronne est ce qui reste quand les trois ordres ont pris la
+   leur. C'est la seule mesure du jeu qui monte vraiment sur neuf ans, et c'est
+   la montée en puissance : d'un quart du royaume en 1479 à la moitié pour un
+   règne qui a repris ce qu'Henri IV avait donné. */
+function partCouronne(){
+  return clamp(100 - ORDRES_ASSISE.reduce((a,g)=>a+S.assise[g],0), 0, 100);
+}
+const MOTS_COURONNE = ["royaume disputé","royaume partagé","royaume affermi",
+                       "puissance de la péninsule","puissance d'Occident"];
+const motCouronne = () => MOTS_COURONNE[Math.min(4,Math.floor(partCouronne()/13))];
+
+/* Déplace de l'assise. Deux façons de l'écrire :
+     as:{noblesse:-5}   la noblesse perd 5, la couronne les récupère
+     as:{couronne:+4}   la couronne gagne 4, pris aux ordres au prorata —
+                        c'est la conquête, qui dilue le poids relatif de tous.
+   Rend le détail, pour que l'écran puisse le montrer. */
+function deplacerAssise(as){
+  const out=[];
+  if(!as) return out;
+  ORDRES_ASSISE.forEach(g=>{
+    if(!as[g]) return;
+    const av=S.assise[g];
+    S.assise[g]=clamp(av+as[g],0,100);
+    if(S.assise[g]!==av) out.push({g, n:GAUGES[g].n, av, ap:S.assise[g]});
+  });
+  if(as.couronne){
+    const total=ORDRES_ASSISE.reduce((a,g)=>a+S.assise[g],0);
+    if(total>0){
+      ORDRES_ASSISE.forEach(g=>{
+        const part=Math.round(as.couronne*S.assise[g]/total);
+        const av=S.assise[g];
+        S.assise[g]=clamp(av-part,0,100);
+        if(S.assise[g]!==av) out.push({g, n:GAUGES[g].n, av, ap:S.assise[g]});
+      });
+    }
+  }
+  return out;
+}
+function rendreAssise(as){
+  if(!as) return;
+  ORDRES_ASSISE.forEach(g=>{ if(as[g]) S.assise[g]=clamp(S.assise[g]-as[g],0,100); });
+  if(as.couronne){
+    const total=ORDRES_ASSISE.reduce((a,g)=>a+S.assise[g],0)||1;
+    ORDRES_ASSISE.forEach(g=>{
+      S.assise[g]=clamp(S.assise[g]+Math.round(as.couronne*S.assise[g]/total),0,100);
+    });
+  }
+}
+
+/* Un ordre puissant et hostile a les moyens de se retourner et la raison de le
+   faire. Un ordre faible peut vous détester sans conséquence. */
+const ordresMenacants = () =>
+  ORDRES_ASSISE.filter(g=>S.assise[g]>=ASSISE_MENACANTE && palier(S.g[g])===0);
+
 /* La stabilité : ce que valent ensemble les trois ordres du royaume. Aucun
    d'eux ne gouverne seul, mais leur moyenne dit si le pays tient. Elle pèse
    sur toutes les entreprises et, quand elle tombe assez bas, elle produit
@@ -25,13 +80,13 @@ const MOTS_STABILITE = motsOrdre("f");
 const motStabilite = () => MOTS_STABILITE[palier(stabilite())];
 const SEUIL_TROUBLES = 30;
 
-/* La rupture générale. Quand les trois ordres sont simultanément en rupture,
-   il ne reste personne pour gouverner avec : ni les grands, ni les villes, ni
-   l'Église. Le règne ne se termine pas l'année même — on laisse un an, et
-   l'avertissement est visible partout — mais s'il n'a pas été redressé à la
-   fin de l'année suivante, il tombe. */
-const ORDRES = ["noblesse","clerge","cortes"];
-const ruptureGenerale = () => ORDRES.every(g=>palier(S.g[g])===0);
+/* La rupture. Ce n'est pas « les trois ordres vous détestent » — un ordre
+   faible peut vous détester sans conséquence. C'est un ordre qui tient assez du
+   royaume pour se retourner, et qui a la raison de le faire. Le règne ne tombe
+   pas l'année même : on laisse un an, l'avertissement est partout, et redresser
+   la relation OU réduire l'assise suffit à l'écarter. */
+const ORDRES = ORDRES_ASSISE;
+const ruptureGenerale = () => ordresMenacants().length>0;
 const ordresEnRupture = () => ORDRES.filter(g=>palier(S.g[g])===0);
 
 
@@ -137,7 +192,25 @@ function deriveRoyaume(){
 
 function entretenirOrdres(){
   const out=[];
+
   // L'usure ordinaire : une relation qu'on ne travaille pas se défait seule.
+  Object.keys(PF_ENTRETIEN).forEach(pk=>{
+    const g=PF_ENTRETIEN[pk];
+    S.g[g]=clamp(S.g[g]-USURE,0,100);
+  });
+
+  // Le Royaume n'a pas de ligne de budget : il suit l'état général et s'use.
+  {
+    const d=deriveRoyaume();
+    if(d!==0){
+      const av=S.g.prosperite;
+      S.g.prosperite=clamp(av+d,0,100);
+      if(S.g.prosperite!==av) out.push({g:"prosperite", n:GAUGES.prosperite.n,
+        pf: d>0?"Le royaume suit l'état général":"Usure des chemins, des greniers et des foires",
+        cran:"sans dotation", d, av, ap:S.g.prosperite});
+    }
+  }
+
   Object.keys(PF_ENTRETIEN).forEach(pk=>{
     const g=PF_ENTRETIEN[pk];
     S.g[g]=clamp(S.g[g]-USURE,0,100);
@@ -152,13 +225,15 @@ function entretenirOrdres(){
         cran:"sans dotation", d, av, ap:S.g.prosperite});
     }
   }
-  const c=centralisation();
-  if(c.d!==0){
-    const av=S.g.autorite;
-    S.g.autorite=clamp(av+c.d,0,100);
-    if(S.g.autorite!==av) out.push({g:"autorite", n:GAUGES.autorite.n,
-      pf: c.d>0?"L'appareil l'emporte sur les ordres":"Les ordres l'emportent sur l'appareil",
-      cran:`${c.couronne} contre ${c.ordres}`, d:c.d, av, ap:S.g.autorite});
+  {
+    const d=deriveRoyaume();
+    if(d!==0){
+      const av=S.g.prosperite;
+      S.g.prosperite=clamp(av+d,0,100);
+      if(S.g.prosperite!==av) out.push({g:"prosperite", n:GAUGES.prosperite.n,
+        pf: d>0?"Le royaume suit l'état général":"Usure des chemins, des greniers et des foires",
+        cran:"sans dotation", d, av, ap:S.g.prosperite});
+    }
   }
   Object.keys(PF_ENTRETIEN).forEach(pk=>{
     const g=PF_ENTRETIEN[pk];
@@ -182,13 +257,25 @@ function entretenirOrdres(){
    casse quand il laisse une jauge tomber. */
 function rentes(){
   const lignes=[];
-  RENTES.forEach(r=>{
-    let part=r.part;
-    if(r.g==="clerge" && enGuerre().length) part+=RENTE_CROISADE;
-    lignes.push({g:r.g, n:GAUGES[r.g].n, v:Math.round(S.g[r.g]*part),
-      croisade: r.g==="clerge" && enGuerre().length>0});
+  const couronne=partCouronne();
+
+  lignes.push({k:"couronne", n:"Domaine de la couronne", detail:`${couronne} % du royaume`,
+    v:Math.round(couronne*RENDEMENT_COURONNE)});
+  lignes.push({k:"pays", n:"Alcabala", detail:word("prosperite",S.g.prosperite),
+    v:Math.round(S.g.prosperite*RENDEMENT_PAYS)});
+
+  /* Chaque ordre verse en proportion de ce qu'il tient et de ce qu'il pense de
+     vous. Lui reprendre son assise réduit donc ce qu'il donne : la Déclaratoire
+     est un pari, pas une évidence. */
+  ORDRES_ASSISE.forEach(g=>{
+    let taux=RENDEMENT_ORDRE;
+    if(g==="clerge" && enGuerre().length) taux+=0.10;   // la bulle de croisade
+    lignes.push({k:g, n:GAUGES[g].n,
+      detail:`${S.assise[g]} % du royaume · ${word(g,S.g[g])}`,
+      croisade: g==="clerge" && enGuerre().length>0,
+      v:Math.round(S.g[g]/100*S.assise[g]*taux)});
   });
-  lignes.push({g:null, n:"Ordinaire du domaine", v:Math.round(renteFixe(S.idx))});
+
   let total=lignes.reduce((s,l)=>s+l.v,0);
 
   const reformes=[];
@@ -199,24 +286,8 @@ function rentes(){
     total+=bonus[f]; reformes.push({n:EXPLOITS[f]?EXPLOITS[f].n:f, v:bonus[f]}); }});
 
   const alea = .9 + Math.random()*.2;
-  total = Math.max(4, Math.round(total*alea));
+  total = Math.max(3, Math.round(total*alea));
   return {total, lignes, reformes};
-}
-
-/* ---------- centralisation ----------
-   Ce qu'on donne à ses propres organes contre ce qu'on donne aux ordres. Un
-   budget qui penche vers les ordres achète leur fidélité et laisse le pouvoir
-   chez eux ; un budget qui penche vers l'appareil le ramène à la couronne. */
-const totalBloc = b => PF.filter(p=>p.bloc===b).reduce((s,p)=>s+STEP_COST[S.budget[p.k]],0);
-function centralisation(){
-  const couronne=totalBloc("couronne"), ordres=totalBloc("ordres");
-  // Seulement une pénalité : la ligne Pouvoir entretient déjà le Pouvoir, et
-  // le récompenser une seconde fois par la forme du budget serait un doublon.
-  // Ce qu'on mesure ici est la dispersion — trop donner aux ordres.
-  const d = ordres>couronne
-    ? -clamp(Math.round((ordres-couronne)/CENTRALISATION_DIVISEUR),0,CENTRALISATION_MAX)
-    : 0;
-  return {couronne, ordres, d};
 }
 
 function rentrees(){
@@ -313,6 +384,10 @@ function apply(e){
     if(EXPLOITS[f] && !S.exploits[f] && !S.perdus[f]){
       S.exploits[f]=S.year;
       out.push({type:"exploit", n:EXPLOITS[f].n, mauvais:EXPLOITS[f].vp<0});
+      /* Un exploit n'est pas qu'un souvenir : c'est un déplacement durable de
+         pouvoir. C'est ici que la Déclaratoire reprend aux grands et qu'un
+         privilège concédé sort de la main du roi. */
+      deplacerAssise(EXPLOITS[f].as).forEach(a=>out.push({type:"assise", ...a}));
     }
   });
 
@@ -320,6 +395,7 @@ function apply(e){
     delete S.exploits[e.perte]; delete S.flags[e.perte];
     S.perdus[e.perte]=S.year;
     out.push({type:"perte", n:EXPLOITS[e.perte].n});
+    rendreAssise(EXPLOITS[e.perte].as);   // ce qu'on avait pris repart
   }
 
   if(e.guerre && !S.guerres[e.guerre] && !S.paix[e.guerre]){
@@ -329,6 +405,9 @@ function apply(e){
     S.paix[e.paix]={debut:S.guerres[e.paix], fin:S.year};
     delete S.guerres[e.paix]; out.push({type:"paix", n:nomGuerre(e.paix)});
   }
+
+  // Une issue peut aussi déplacer de l'assise directement.
+  if(e.as) deplacerAssise(e.as).forEach(a=>out.push({type:"assise", ...a}));
 
   if(e.inject)e.inject.forEach(i=>S.queue.push(i));
   if(e.ch)S.chronicle.push({y:S.year,txt:e.ch});
@@ -340,10 +419,16 @@ function undo(eff,e){
   Object.keys(JAUGE_CLE).forEach(k=>{
     if(e[k])S.g[JAUGE_CLE[k]]=clamp(S.g[JAUGE_CLE[k]]-e[k],0,100);
   });
-  [e.flag,e.flag2,e.flag3].forEach(f=>{if(f){delete S.flags[f]; delete S.exploits[f];}});
+  [e.flag,e.flag2,e.flag3].forEach(f=>{
+    if(!f) return;
+    if(S.exploits[f] && EXPLOITS[f]) rendreAssise(EXPLOITS[f].as);
+    delete S.flags[f]; delete S.exploits[f];
+  });
+  if(e.as) rendreAssise(e.as);
   if(e.perte && S.perdus[e.perte]){
     delete S.perdus[e.perte];
     S.exploits[e.perte]=S.year; S.flags[e.perte]=true;
+    deplacerAssise(EXPLOITS[e.perte].as);
   }
   if(e.guerre && S.guerres[e.guerre]===S.year) delete S.guerres[e.guerre];
   if(e.paix && S.paix[e.paix]){ S.guerres[e.paix]=S.paix[e.paix].debut; delete S.paix[e.paix]; }
