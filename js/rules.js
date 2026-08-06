@@ -73,12 +73,13 @@ function computeThreshold(opt){
   if(adm!==0 && opt.port!=="admin"){ rows.push(["Secrétaires et archives",adm]); T+=adm; }
 
   const key=PORT_JAUGE[opt.port];
-  // Amplitude portée à ±14 : à ±10, la jauge ne pesait quasiment rien face à
-  // la dotation, et croiser les dépendances n'aurait pas été senti.
-  const gm=Math.round((S.g[key]-50)/3.5);
+  /* ±10. La jauge et la stabilité se cumulaient à ±22 sur chaque jet depuis que
+     chaque ligne consulte sa propre jauge : un royaume bien tenu triomphait
+     presque à volonté. On garde l'influence sensible sans la rendre décisive. */
+  const gm=Math.round((S.g[key]-50)/5);
   if(gm!==0){ rows.push([GAUGES[key].n+" — "+word(key,S.g[key]),gm]); T+=gm; }
 
-  const st=Math.round((stabilite()-50)/6);
+  const st=Math.round((stabilite()-50)/10);
   if(st!==0){ rows.push(["Le royaume — "+motStabilite(),st]); T+=st; }
 
   // Une entreprise qu'on ne peut pas financer se mène quand même, mal.
@@ -121,8 +122,36 @@ function soldeDette(){
    consacre. Appliqué au passage d'une année à l'autre, après la répartition
    de l'année écoulée — on récolte ce qu'on a payé. Rend le détail pour le
    bilan de fin d'année. */
+/* Le Royaume n'a pas de ligne de budget : il n'est pas quelque chose qu'on
+   achète. Il dérive vers l'état général du royaume — la moyenne de ce que
+   valent le Pouvoir et les trois ordres — et s'use un peu chaque année.
+   Sans ce frein il ne pouvait que monter : rien ne le tirait vers le bas, et
+   il plafonnait à cent dans toutes les parties. */
+const USURE_ROYAUME = 2;
+const USURE = 1;   // ce que perd chaque jauge par an, faute d'entretien
+function deriveRoyaume(){
+  const autres=["autorite","noblesse","clerge","cortes"];
+  const moy=autres.reduce((a,g)=>a+S.g[g],0)/autres.length;
+  return Math.round((moy-S.g.prosperite)/5) - USURE_ROYAUME;
+}
+
 function entretenirOrdres(){
   const out=[];
+  // L'usure ordinaire : une relation qu'on ne travaille pas se défait seule.
+  Object.keys(PF_ENTRETIEN).forEach(pk=>{
+    const g=PF_ENTRETIEN[pk];
+    S.g[g]=clamp(S.g[g]-USURE,0,100);
+  });
+  {
+    const d=deriveRoyaume();
+    if(d!==0){
+      const av=S.g.prosperite;
+      S.g.prosperite=clamp(av+d,0,100);
+      if(S.g.prosperite!==av) out.push({g:"prosperite", n:GAUGES.prosperite.n,
+        pf: d>0?"Le royaume suit l'état général":"Usure des chemins, des greniers et des foires",
+        cran:"sans dotation", d, av, ap:S.g.prosperite});
+    }
+  }
   const c=centralisation();
   if(c.d!==0){
     const av=S.g.autorite;
@@ -132,7 +161,13 @@ function entretenirOrdres(){
       cran:`${c.couronne} contre ${c.ordres}`, d:c.d, av, ap:S.g.autorite});
   }
   Object.keys(PF_ENTRETIEN).forEach(pk=>{
-    const g=PF_ENTRETIEN[pk], d=derive(S.budget[pk]);
+    const g=PF_ENTRETIEN[pk];
+    let d=derive(S.budget[pk]);
+    /* L'entretien s'essouffle à mesure qu'on monte : entretenir une relation
+       déjà excellente ne l'améliore presque plus, alors que la laisser tomber
+       coûte toujours autant. Sans cela, une ligne financée poussait sa jauge à
+       cent en quelques années et l'y maintenait — plus rien à piloter. */
+    if(d>0) d=Math.round(d*(100-S.g[g])/100);
     if(!d) return;
     const av=S.g[g];
     S.g[g]=clamp(av+d,0,100);
@@ -175,9 +210,13 @@ function rentes(){
 const totalBloc = b => PF.filter(p=>p.bloc===b).reduce((s,p)=>s+STEP_COST[S.budget[p.k]],0);
 function centralisation(){
   const couronne=totalBloc("couronne"), ordres=totalBloc("ordres");
-  return {couronne, ordres,
-    d: clamp(Math.round((couronne-ordres)/CENTRALISATION_DIVISEUR),
-             -CENTRALISATION_MAX, CENTRALISATION_MAX)};
+  // Seulement une pénalité : la ligne Pouvoir entretient déjà le Pouvoir, et
+  // le récompenser une seconde fois par la forme du budget serait un doublon.
+  // Ce qu'on mesure ici est la dispersion — trop donner aux ordres.
+  const d = ordres>couronne
+    ? -clamp(Math.round((ordres-couronne)/CENTRALISATION_DIVISEUR),0,CENTRALISATION_MAX)
+    : 0;
+  return {couronne, ordres, d};
 }
 
 function rentrees(){

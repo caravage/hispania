@@ -20,7 +20,7 @@ const FICHIERS = ["js/data/config.js","js/data/art.js","js/data/exploits.js","js
 const ctx = vm.createContext({Math, JSON, console, Object, Array, String, Number});
 const src = FICHIERS.map(f => fs.readFileSync(path.join(R, f), "utf8")).join("\n;\n");
 const X = vm.runInContext(src +
-  "\n;({NODES,POOL,INJECTED,ART,EXPLOITS,GUERRES,PF,YEARS,BAND_KEYS,PORT_JAUGE,PROLOGUE,PETITS,GAUGES,RENTES,JAUGE_CLE,stabilite,S,bands,score})",
+  "\n;({NODES,POOL,INJECTED,ART,EXPLOITS,GUERRES,PF,YEARS,BAND_KEYS,PORT_JAUGE,PROLOGUE,PETITS,GAUGES,RENTES,JAUGE_CLE,PF_ENTRETIEN,stabilite,S,bands,score})",
   ctx, {filename: "bundle.js"});
 
 const err = [], warn = [];
@@ -89,11 +89,12 @@ Object.keys(X.GAUGES).forEach(g => {
   if (!X.GAUGES[g].w || X.GAUGES[g].w.length !== 5) err.push(`la jauge « ${g} » n'a pas cinq mots`);
 });
 
-/* L'invariant du couplage : un portefeuille ne doit pas nourrir en premier
-   lieu la jauge qui conditionne sa réussite. Cinq boucles de ce genre
-   laissaient les grands « en armes » dans toutes les parties simulées ; le jour
-   où l'on écrira des effets de clergé, c'est ici qu'on verra la boucle
-   réapparaître. */
+/* L'invariant du couplage. Une ligne de budget consulte sa propre jauge, et
+   ses réussites la font monter : c'est une boucle de rétroaction, assumée
+   depuis que les lignes portent le nom des jauges. Ce qui la rend vivable est
+   l'entretien — une ligne financée fait monter sa jauge quoi qu'il arrive,
+   même quand tout échoue. Une boucle SANS entretien est en revanche une
+   spirale sans sortie : c'est elle qu'on refuse. */
 X.PF.forEach(p => {
   const gate = X.PORT_JAUGE[p.k];
   const mouv = {};
@@ -103,8 +104,15 @@ X.PF.forEach(p => {
       Object.keys(X.JAUGE_CLE).forEach(c => { if (eff[c]) mouv[X.JAUGE_CLE[c]] = (mouv[X.JAUGE_CLE[c]] || 0) + eff[c]; });
     })));
   const classe = Object.entries(mouv).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
-  if (classe.length && classe[0][0] === gate)
-    err.push(`« ${p.n} » est conditionné par ${gate} et c'est la jauge que ses issues font le plus bouger — boucle de rétroaction`);
+  const boucle = classe.length && classe[0][0] === gate;
+  if (boucle && X.PF_ENTRETIEN[p.k] !== gate)
+    err.push(`« ${p.n} » consulte ${gate}, ses issues nourrissent ${gate}, et aucun entretien ne permet d'en sortir — spirale sans issue`);
+});
+
+// Toute ligne de budget doit entretenir une jauge, sinon la dépense ne
+// construit rien de durable.
+X.PF.forEach(p => {
+  if (!X.PF_ENTRETIEN[p.k]) warn.push(`la ligne « ${p.n} » n'entretient aucune jauge`);
 });
 
 // Les petits événements : résolus sans dé, effets minces.

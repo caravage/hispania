@@ -4,7 +4,7 @@ Jeu de gestion textuel. Le royaume est à vous ; reste à savoir ce qu'il devien
 
 L'acte s'ouvre en 1479 : Alcáçovas met fin à la guerre de Succession et Ferdinand hérite de l'Aragon la même année. C'est le moment où les deux souverains sont définitivement en place.
 
-Les années d'avant se règlent en **prologue** : trois décisions rapides, sans dé et sans coût, qui disent seulement comment on est sorti de la guerre de Succession. Elles annoncent leurs effets — il n'y a rien à cacher là où il n'y a pas de hasard — et composent l'état de 1479. Le point de départ n'est donc pas fixe : c'est le résultat de ces cinq choix.
+Les années d'avant se règlent en **prologue** : trois décisions rapides, sans dé et sans coût, qui disent seulement comment on est sorti de la guerre de Succession. Elles annoncent leurs effets — il n'y a rien à cacher là où il n'y a pas de hasard — et composent l'état de 1479. Le point de départ n'est donc pas fixe : c'est le résultat de ces trois choix.
 
 Ouvrir `index.html` dans un navigateur. Pas de serveur, pas d'installation, pas d'étape de compilation.
 
@@ -15,20 +15,20 @@ Ouvrir `index.html` dans un navigateur. Pas de serveur, pas d'installation, pas 
 Neuf années, une par tour. Chaque année :
 
 1. **Rentrées** — le trésor s'alimente. Le montant varie.
-2. **Répartition** — six portefeuilles, cinq crans de dotation chacun. Il n'y a jamais de quoi tenir les six.
+2. **Répartition** — cinq lignes portant le nom des jauges, cinq crans chacune. Il n'y a jamais de quoi les tenir toutes. Le Royaume n'a pas de ligne : il résulte de tout le reste.
 3. **Situations** — de deux à cinq. Le nœud historique de l'année, plus une situation par guerre en cours, plus ce que le passé vous renvoie. Le jeu vous dit ce qui a chargé l'année.
 4. **Affaires courantes** — trois à cinq par an, tranchées sans dé : un pont emporté, un ours en cadeau, une éclipse. Effets minces, mais c'est ce qui empêche une année d'être une suite de crises.
 5. **Chronique** — ce que l'année laisse par écrit, ce qu'elle laisse au règne, et le mouvement de chaque jauge sur les douze mois. Les années précédentes sont dans les **archives**, à l'icône du bandeau.
 
 Chaque situation offre plusieurs réponses. Les données les classent en **historique**, **divergente** et **inouïe**, mais **le joueur ne voit jamais ces mots** et l'ordre d'affichage est tiré au sort à chaque partie : rien ne désigne la voie que l'histoire a suivie.
 
-Sous chaque réponse, sans avoir à la sélectionner : le portefeuille et sa dotation, la jauge dont elle dépend et son état, le coût, et la **chance de réussite en pourcentage** avec sa barre. Le détail chiffré se déplie sur la réponse retenue. La glose en italique — ce que l'option engage vraiment — n'apparaît qu'à la résolution, une fois le sort jeté.
+Sous chaque réponse, sans avoir à la sélectionner : la ligne de budget concernée et sa dotation, la jauge et son état, le coût, et la **chance de réussite en pourcentage** avec sa barre. Le détail chiffré se déplie sur la réponse retenue. La glose en italique — ce que l'option engage vraiment — n'apparaît qu'à la résolution, une fois le sort jeté.
 
 La règle qui tient l'uchronie est dans le mot **osé**. « Personne n'a osé » n'est pas « personne n'a imaginé » : une réponse inouïe doit rester une chose qu'un conseiller de 1484 aurait pu formuler devant la reine sans passer pour fou. Une option qu'aucun contemporain n'aurait pu concevoir n'est pas audacieuse, elle est anachronique — et elle n'a pas sa place ici.
 
 Il n'y a pas de second choix sur l'intensité : l'arbitrage entre sûreté et audace se fait à la répartition, et choisir une réponse est déjà choisir une manière.
 
-Le règne se juge en **points de victoire**, comptés à la fin et à la fin seulement. Chaque issue en vaut quelques-uns, mais l'essentiel vient des **exploits** : les acquis nommés du règne. Un exploit se gagne, et il peut se **perdre** — prendre Alhama vaut douze points, la laisser reprendre en coûte neuf de plus, parce que toute l'Europe avait vu la place tomber. Une réussite inouïe compte exactement autant qu'une réussite historique : c'est l'entreprise qui est jugée, pas sa conformité aux chroniques.
+Le règne se juge en **points de victoire**, comptés à la fin et à la fin seulement. Ils viennent uniquement des **exploits** : les acquis nommés du règne — jouer ne rapporte rien, réussir quelque chose de notable rapporte. Un exploit se gagne, et il peut se **perdre** — prendre Alhama vaut douze points, la laisser reprendre en coûte neuf de plus, parce que toute l'Europe avait vu la place tomber. Une réussite inouïe compte exactement autant qu'une réussite historique : c'est l'entreprise qui est jugée, pas sa conformité aux chroniques.
 
 Les **exploits** sont peu nombreux et volontairement : un marqueur qui note qu'une affaire s'est bien passée n'est pas un exploit, c'est du travail bien fait. Ces marqueurs existent toujours — ils conditionnent des situations et grossissent les rentrées — mais ils ne comptent pas au bilan.
 
@@ -88,7 +88,8 @@ Un événement, où qu'il soit :
   opts:[{
     label:"Ouvrir les greniers royaux.",
     voie:"historique",                // classement interne, jamais montré au joueur
-    port:"justice",                   // portefeuille qui modifie le seuil
+    port:"autorite",                  // ligne de budget : autorite | noblesse
+                                      //   | clerge | cortes | france
     base:52,                          // difficulté nue
     cost:2,                           // en trésor, affiché sous la réponse
     forme:"sure",                     // facultatif : normale | sure | extreme
@@ -106,7 +107,7 @@ Un événement, où qu'il soit :
 
 Les cinq issues sont **obligatoires**. Une bande sans issue casse le tour.
 
-**Effets disponibles.** `t` trésor, `au` autorité, `co` Cortès, `pr` état du royaume, `no` les grands, `fr` France. Plus :
+**Effets disponibles.** `t` trésor, `au` Pouvoir, `co` Bourgeoisie, `cl` Clergé, `pr` Royaume, `no` Noblesse, `fr` France. Plus :
 
 - `flag`/`flag2`/`flag3` — marqueurs durables. **Si le marqueur a une entrée dans `data/exploits.js`, il devient un acquis du règne et compte au bilan.** C'est tout ce qu'il y a à faire : rien à écrire dans l'issue.
 - `perte:"id"` — reprend un exploit. Ne fait rien s'il n'a jamais été obtenu : on ne perd que ce qu'on a tenu.
@@ -164,7 +165,13 @@ C'est la pièce centrale. Trois règles :
 
 **Une ligne de budget ne conditionne jamais la jauge qu'elle entretient.** Chaque portefeuille était autrefois adossé à la jauge que ses propres réussites alimentaient : payer la Cour servait à gagner la Noblesse, mais il fallait déjà la Noblesse pour que payer la Cour marche. Cinq boucles de rétroaction positive — d'où la noblesse « en armes » dans toutes les parties simulées. `PORT_JAUGE` croise désormais les dépendances : ce qui conditionne une dépense est ce qui la rend crédible, pas ce qu'elle achète. Le vérificateur refuse toute réapparition de boucle.
 
-**L'argent dépensé fait monter la jauge en valeur absolue** (`ENTRETIEN_PAR_MARAVEDI`), deux points par maravédi et par an, contre −4 pour une ligne abandonnée. C'est ce qui permet de compenser ce que les situations retirent, et donc de relever un ordre effondré. Sans cela, un ordre généreusement payé s'effondrait quand même.
+**Les situations perturbent, le budget compense et pilote.** C'est le seul principe à retenir. Chaque ligne de budget entretient sa jauge d'un demi-point par cuento dépensé, contre −3 pour une ligne abandonnée — la seule garantie de pouvoir redresser une jauge effondrée, quoi qu'aient fait les dés.
+
+Trois freins empêchent la dérive, et ils ont tous été ajoutés après mesure :
+
+- **Les situations sont à espérance nulle**, pondérées par la fréquence réelle de chaque bande. Égaliser les sommes écrites ne suffisait pas : dès que les jauges montent, le seuil monte et le succès sort bien plus souvent que l'échec, si bien qu'un contenu neutre sur le papier poussait tout à cent.
+- **L'entretien s'essouffle en montant** — entretenir une relation déjà excellente ne l'améliore presque plus, alors que la laisser tomber coûte toujours autant.
+- **Tout s'use d'un point par an**, et le Royaume de deux : il n'a pas de ligne de budget, il dérive vers l'état général du royaume et se dégrade seul.
 
 **La forme du budget compte autant que son montant.** Les six lignes se rangent en deux blocs : l'appareil de la couronne (justice, armée, ambassades) et les trois ordres. Ce qu'on donne à son propre appareil concentre le pouvoir, ce qu'on donne aux ordres achète leur fidélité et le disperse. La différence des deux totaux fait monter ou descendre le Pouvoir chaque année, jusqu'à ±5.
 

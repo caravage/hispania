@@ -22,7 +22,7 @@ const S = {
   entretien:[],       // ce que les dotations ont entretenu cette année
   gDebut:null,         // les jauges au 1er janvier, pour le bilan de fin d'année
 
-  budget:{justice:1,guerre:2,foi:1,diplomatie:1,cour:2,admin:1},
+  budget:{autorite:2, france:1, noblesse:1, clerge:1, cortes:1},
   lastBudget:null,
 
   flags:{}, exploits:{}, perdus:{},

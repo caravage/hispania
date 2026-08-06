@@ -133,7 +133,16 @@ function ordreOptions(ev){
 const app=()=>document.getElementById("app");
 const ECRANS={intro:sIntro,prologue:sPrologue,budget:sBudget,event:sEvent,
               resolve:sResolve,chronicle:sChron,archives:sArchives,end:sEnd};
-function render(){ ledger(); ECRANS[S.phase](); window.scrollTo(0,0); }
+let dernierEcran="";
+function render(){
+  ledger();
+  ECRANS[S.phase]();
+  /* On ne remonte qu'en changeant d'écran. Chaque choix reconstruit #app, et
+     remonter à chaque fois renvoyait le joueur en haut de page au moment
+     précis où il venait de cliquer en bas. */
+  const ecran=[S.phase,S.year,S.ev_i,S.pro_i].join("/");
+  if(ecran!==dernierEcran){ window.scrollTo(0,0); dernierEcran=ecran; }
+}
 
 function sIntro(){
   app().innerHTML=`
@@ -208,16 +217,20 @@ function sBudget(){
   const trop=spent>dispo;
 
   const ligneHTML=p=>{
-    const lv=S.budget[p.k], j=PORT_JAUGE[p.k];
+    const lv=S.budget[p.k];
     let warn="";
     if(S.lastBudget && S.lastBudget[p.k]-lv>=2) warn=`<div class="warn">Coupe brutale : soldes impayées, clientèles déçues.</div>`;
     return `<div class="pf">
-      <div class="pf-head"><span class="pf-name">${p.n}</span><span class="pf-cost">${STEP_COST[lv]}</span></div>
-      <div class="pf-desc">${p.d}
-        <span class="pf-j">Dépend de <b class="p${palier(S.g[j])}">${GAUGES[j].n}</b>${
-          PF_ENTRETIEN[p.k]?` · <b class="${derive(lv)>0?"pos":derive(lv)<0?"neg":""}">${derive(lv)>0?"+":""}${derive(lv)}</b> par an`:""}</span></div>
-      <div class="steps">${STEPS.map((st,i)=>
-        `<button class="step" data-k="${p.k}" data-i="${i}" aria-pressed="${i===lv}">${st}</button>`).join("")}</div>
+      <div class="pf-head">
+        <span class="pf-name">${p.n} <b class="p${palier(S.g[p.k])}">${word(p.k,S.g[p.k])}</b></span>
+        <span class="pf-cost">${STEP_COST[lv]} ${MONNAIE}</span></div>
+      <div class="pf-desc">${p.d}</div>
+      <div class="steps">${STEPS.map((st,i)=>{
+        const g=derive(i);
+        return `<button class="step" data-k="${p.k}" data-i="${i}" aria-pressed="${i===lv}">
+          <span class="st-n">${st}</span>
+          <span class="st-c">${STEP_COST[i]}</span>
+          <span class="st-g ${g>0?"pos":g<0?"neg":""}">${g>0?"+":""}${g}</span></button>`;}).join("")}</div>
       ${warn}</div>`;
   };
 
@@ -247,18 +260,25 @@ function sBudget(){
   <div class="eyebrow">Année ${S.year} · Répartition</div>
   <h2>La bourse de l'année</h2>
 
-  <details class="rentes" open><summary>Le compte de l'année</summary>
+  <details class="rentes" open><summary>Le compte de l'année, en ${MONNAIE_LONG}</summary>
     <table>
-      <tr class="sec"><td>Ce que le royaume a versé</td><td>${S.revenu}</td></tr>
-      ${d.lignes.map(l=>`<tr><td>${l.n}${l.croisade?` <span class="prov">croisade comprise</span>`:""}</td><td>+${l.v}</td></tr>`).join("")}
-      ${d.reformes.map(r=>`<tr><td>${r.n} <span class="prov">réforme</span></td><td>+${r.v}</td></tr>`).join("")}
+      <tr class="sec"><td>Le pays</td><td></td></tr>
+      ${d.lignes.filter(l=>l.g==="prosperite"||l.g==="autorite").map(l=>
+        `<tr><td>${l.n}</td><td>+${l.v}</td></tr>`).join("")}
+      <tr><td>Domaine royal <span class="prov">permanent, croît avec le règne</span></td><td>+${(d.lignes.find(l=>!l.g)||{v:0}).v}</td></tr>
+      <tr class="sec"><td>Les trois ordres</td><td></td></tr>
+      ${d.lignes.filter(l=>["noblesse","clerge","cortes"].includes(l.g)).map(l=>
+        `<tr><td>${l.n}${l.croisade?` <span class="prov">bulle de croisade comprise</span>`:""}</td><td>+${l.v}</td></tr>`).join("")}
+      ${allegementHueste()?`<tr><td>La hueste sert à ses frais <span class="prov">Noblesse</span></td><td>+${allegementHueste()}</td></tr>`:""}
+      ${d.reformes.length?`<tr class="sec"><td>Réformes acquises</td><td></td></tr>
+      ${d.reformes.map(r=>`<tr><td>${r.n} <span class="prov">acquis durable du règne</span></td><td>+${r.v}</td></tr>`).join("")}`:""}
+      <tr class="sec"><td>Total des rentrées</td><td>${S.revenu}</td></tr>
       ${enGuerre().length?`
       <tr class="sec neg"><td>Guerres</td><td>−${S.solde}</td></tr>
-      ${enGuerre().map(k=>`<tr class="neg"><td>${nomGuerre(k).replace(/^la /,"")}</td><td>−${GUERRES[k].solde}</td></tr>`).join("")}
-      ${allegementHueste()?`<tr><td>La hueste sert à ses frais <span class="prov">Noblesse</span></td><td>+${allegementHueste()}</td></tr>`:""}`:""}
+      ${enGuerre().map(k=>`<tr class="neg"><td>${nomGuerre(k).replace(/^la /,"")}</td><td>−${GUERRES[k].solde}</td></tr>`).join("")}`:""}
       <tr class="sec"><td>En caisse</td><td>${S.tresor}</td></tr>
       <tr class="sec neg"><td>Dotations</td><td>−${spent}</td></tr>
-      <tr class="tot"><td>Reste pour les affaires de l'année</td><td>${reste}</td></tr>
+      <tr class="tot"><td>Reste pour les affaires de l'année</td><td>${reste} ${MONNAIE}</td></tr>
     </table></details>
 
   <div class="purse">
@@ -308,13 +328,11 @@ function chanceHTML(o,choisie){
         <div class="ch-fill p${cran}" style="width:${plein}%"></div>
         <div class="ch-fill demi p${cran}" style="width:${demi}%"></div>
       </div>
-      <div class="ch-mot"><b class="p${cran}">${pct} %</b> d'aboutir<span class="ch-plein">dont ${plein} % pleinement</span>
+      <div class="ch-mot"><b class="p${cran}">${pct} %</b> de réussite
         ${choisie?`<span class="ch-detail" data-d="1">le détail</span>`:""}</div>
       <div class="ch-rows" hidden><table>${rows.map(x=>
         `<tr><td>${x[0]}</td><td>${x[1]>0?"+":""}${x[1]}</td></tr>`).join("")}
-        <tr><td><b>L'entreprise aboutit</b></td><td><b>${pct} %</b></td></tr>
-        <tr><td>dont pleinement réussie</td><td>${plein} %</td></tr>
-        <tr><td>dont à moitié</td><td>${demi} %</td></tr></table></div>
+        <tr><td><b>Chance de réussite</b></td><td><b>${pct} %</b></td></tr></table></div>
     </div>`;
 }
 
@@ -410,14 +428,15 @@ function sPetit(ev){
 function effetHTML(e){
   if(e.type==="tresor") return `<div class="ef"><span>Trésor</span><span class="${e.v<0?"neg":"pos"}">${e.v>0?"+":""}${e.v}</span></div>`;
   if(e.type==="jauge"){
-    const monte=e.sens>0;
-    const fl=`<span class="fleche ${monte?"up":"down"}">${monte?"▲":"▼"}</span>`;
-    const mot = e.palAv===e.palAp
-      ? `<span class="ef-mot p${e.palAp}">${e.motAp}</span>`
-      : `<span class="ef-mot chg">${e.motAv} → <b class="p${e.palAp}">${e.motAp}</b></span>`;
-    // data-de / data-a : le compteur part de l'ancienne valeur et va à la neuve.
-    return `<div class="ef"><span>${e.n}</span><span>${fl}${mot}
-      <b class="ef-nb ${monte?"pos":"neg"}" data-de="${e.av}" data-a="${e.ap}">${e.av}</b></span></div>`;
+    /* Le mouvement seul. Le total de la jauge est au bandeau, en permanence :
+       le répéter ici noyait la seule chose qu'on veut savoir, qui est ce que
+       la décision vient de coûter ou de rapporter. Le changement de palier est
+       dit, parce que c'est lui qui change quelque chose. */
+    const d=e.ap-e.av, monte=d>0;
+    const seuil = e.palAv!==e.palAp
+      ? `<span class="ef-seuil">${e.motAv} → <b class="p${e.palAp}">${e.motAp}</b></span>` : "";
+    return `<div class="ef"><span>${e.n}</span><span>${seuil}
+      <b class="ef-d ${monte?"pos":"neg"}">${monte?"+":""}${d}</b></span></div>`;
   }
   if(e.type==="exploit") return `<div class="ef marque ${e.mauvais?"neg":""}"><span>${e.mauvais?"Échec durable":"Ce que le règne retiendra"}</span><span>${e.n}</span></div>`;
   if(e.type==="perte")   return `<div class="ef marque neg"><span>Repris</span><span>${e.n}</span></div>`;
@@ -496,7 +515,8 @@ function bilanAnneeHTML(){
       ? `<span class="ef-mot p${pAp}">${word(k,ap)}</span>`
       : `<span class="ef-mot chg">${word(k,av)} → <b class="p${pAp}">${word(k,ap)}</b></span>`;
     return `<div class="ef"><span>${GAUGES[k].n}</span><span>${fl}${mot}
-      <b class="ef-nb ${d>0?"pos":d<0?"neg":""}" data-de="${av}" data-a="${ap}">${av}</b></span></div>`;
+      <b class="ef-d ${d>0?"pos":d<0?"neg":""}">${d>0?"+":""}${d||"—"}</b>
+      <b class="ef-nb" data-de="${av}" data-a="${ap}">${av}</b></span></div>`;
   }).join("");
   return `
     <div class="rule"></div>
@@ -591,12 +611,15 @@ function sEnd(){
   const etat=k=>word(k,S.g[k]);
   const {total,lignes}=score();
   const chute = S.fin==="rupture";   // déclaré avant le jugement, qui s'en sert
+  /* Seuils calibrés sur la distribution mesurée : dix parties jouées au hasard
+     donnent 95 à 195 points, médiane 148. Un joueur qui choisit vaut mieux que
+     le hasard, d'où des paliers un peu au-dessus. */
   const jugement =
       chute      ?"Ce qui avait été fait ne comptera pas : personne ne resta pour le tenir."
-    : total>=110?"Un règne dont on parlera tant qu'il y aura des chroniques."
-    : total>=80 ?"Un grand règne. Le royaume légué ne ressemble pas à celui qu'on a reçu."
-    : total>=50 ?"Un règne solide. Ce qui a été fait tiendra."
-    : total>=25 ?"Un règne qui aura tenu, ce qui n'était pas acquis en 1479."
+    : total>=230?"Un règne dont on parlera tant qu'il y aura des chroniques."
+    : total>=180?"Un grand règne. Le royaume légué ne ressemble pas à celui qu'on a reçu."
+    : total>=130?"Un règne solide. Ce qui a été fait tiendra."
+    : total>=80 ?"Un règne qui aura tenu, ce qui n'était pas acquis en 1479."
     : total>=0  ?"Un règne qui aura duré. C'est tout ce qu'on en dira."
     :            "Un règne dont l'héritier devra réparer les décisions.";
 
